@@ -1,0 +1,6 @@
+{
+    "clangd.arguments": [
+        "--query-driver=D:/msys64/ucrt64/bin/g++.exe",
+        "--compile-commands-dir=E:/cpp/projects/ege-projects/something"
+    ]
+}

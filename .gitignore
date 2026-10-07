@@ -1,0 +1,7 @@
+# EazyMake build artifacts
+build/
+.ezmk/
+*.o
+*.obj
+*.tmp.o
+*.tmp.obj
