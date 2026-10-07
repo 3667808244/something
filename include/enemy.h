@@ -27,7 +27,7 @@ class Enemy : public Actor {
 		int health() const;
 		bool is_dead() const;
 
-		virtual void draw(PIMAGE image);
-		virtual void update(float delta, Scene &scene);
-		virtual bool is_invalid() const;
+		void draw(PIMAGE image) override;
+		void update(float delta, Scene &scene) override;
+		bool is_invalid() const override;
 };

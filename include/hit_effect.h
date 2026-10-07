@@ -10,9 +10,7 @@ class HitEffect : public Spirit {
 	public:
 		HitEffect(float x, float y);
 
-		virtual void draw(PIMAGE image);
-		virtual void update(float delta, Scene &scene);
-		virtual void handal_keybord(key_msg msg);
-		virtual void handal_mouse(mouse_msg msg);
-		virtual bool is_invalid() const;
+		void draw(PIMAGE image) override;
+		void update(float delta, Scene &scene) override;
+		bool is_invalid() const override;
 };

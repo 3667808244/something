@@ -70,7 +70,7 @@ class Scene : public Spirit {
 
 		void draw(PIMAGE image) override;
 		void update(float delta, Scene &scene) override;
-		void handal_keybord(key_msg msg) override;
-		void handal_mouse(mouse_msg msg) override;
+		void handle_keyboard(key_msg msg) override;
+		void handle_mouse(mouse_msg msg) override;
 		bool is_invalid() const override;
 };

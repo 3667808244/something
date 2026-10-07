@@ -1,11 +1,12 @@
 #include "enemy.h"
 
 #include <algorithm>
-#include <chrono>
 #include <cmath>
+#include <cstdint>
 
 #include "define.h"
 #include "player.h"
+#include "random_seed.h"
 #include "scene.h"
 
 constexpr float enemy_size = 20.0f;
@@ -29,9 +30,7 @@ constexpr unsigned enemy_seed_salt = 2654435761u;
 Enemy::Enemy(float x, float y, int window_width, int window_height)
     : Actor(x, y, enemy_size, enemy_size, window_width, window_height),
       // 混入出生 x，避免同一批创建的敌人因为时钟分辨率相同而拿到同一颗种子
-      _rng(static_cast<std::mt19937::result_type>(std::random_device{}()) ^
-           static_cast<std::mt19937::result_type>(std::chrono::steady_clock::now().time_since_epoch().count()) ^
-           static_cast<std::mt19937::result_type>(static_cast<unsigned>(x) * enemy_seed_salt)) {
+      _rng(make_random_seed(static_cast<std::uint64_t>(static_cast<unsigned>(x)) * enemy_seed_salt)) {
 	_health = enemy_max_health;
 	_dead = false;
 	_flash_timer = 0.0f;

@@ -2,7 +2,8 @@
 
 #include "define.h"
 
-Platform::Platform(float x, float y, float width, float height) : Rect(x, y, width, height) {}
+Platform::Platform(float center_x, float center_y, float width, float height)
+    : Rect(center_x, center_y, width, height) {}
 
 void Platform::draw(PIMAGE image) {
 	setfillcolor(rgb(100, 160, 100), image);

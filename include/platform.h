@@ -4,7 +4,7 @@
 
 class Platform : public Rect {
 	public:
-		Platform(float x, float y, float width, float height);
+		Platform(float center_x, float center_y, float width, float height);
 
-		virtual void draw(PIMAGE image);
+		void draw(PIMAGE image) override;
 };

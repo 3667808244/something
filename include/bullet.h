@@ -11,9 +11,7 @@ class Bullet : public Spirit {
 	public:
 		Bullet(float x, float y, float dir_x, float dir_y, float speed, int window_width, int window_height);
 
-		virtual void draw(PIMAGE image);
-		virtual void update(float delta, Scene &scene);
-		virtual void handal_keybord(key_msg msg);
-		virtual void handal_mouse(mouse_msg msg);
-		virtual bool is_invalid() const;
+		void draw(PIMAGE image) override;
+		void update(float delta, Scene &scene) override;
+		bool is_invalid() const override;
 };

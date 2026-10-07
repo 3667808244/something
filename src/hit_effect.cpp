@@ -28,8 +28,4 @@ void HitEffect::draw(PIMAGE image) {
 
 void HitEffect::update(float delta, Scene &scene [[maybe_unused]]) { _life -= delta; }
 
-void HitEffect::handal_keybord(key_msg msg [[maybe_unused]]) {}
-
-void HitEffect::handal_mouse(mouse_msg msg [[maybe_unused]]) {}
-
 bool HitEffect::is_invalid() const { return _life <= 0.0f; }

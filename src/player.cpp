@@ -1,13 +1,13 @@
 #include "player.h"
 
 #include <algorithm>
-#include <chrono>
 #include <cmath>
 
 #include "bullet.h"
 #include "define.h"
 #include "ege/graphics.h"
 #include "enemy.h"
+#include "random_seed.h"
 #include "scene.h"
 
 constexpr float player_size = 20.0f;
@@ -28,11 +28,8 @@ constexpr int player_max_health = 100;
 constexpr int contact_damage = 20;
 constexpr float invulnerable_duration = 1.0f;
 
-Player::Player(int window_width, int window_height)
-    : Actor(static_cast<float>(window_width) / 2, static_cast<float>(window_height) / 2, player_size,
-            player_size, window_width, window_height),
-      _rng(static_cast<std::mt19937::result_type>(std::random_device{}()) ^
-           static_cast<std::mt19937::result_type>(std::chrono::steady_clock::now().time_since_epoch().count())) {
+Player::Player(int window_width, int window_height, float spawn_x, float spawn_y)
+    : Actor(spawn_x, spawn_y, player_size, player_size, window_width, window_height), _rng(make_random_seed()) {
 	_jump_requested = false;
 	_jump_held = false;
 	_drop_through = false;
@@ -46,8 +43,8 @@ Player::Player(int window_width, int window_height)
 	_reloading = false;
 	_health = player_max_health;
 	_invulnerable_timer = 0.0f;
-	_spawn_x = _x;
-	_spawn_y = _y;
+	_spawn_x = spawn_x;
+	_spawn_y = spawn_y;
 }
 
 void Player::draw(PIMAGE image) {
@@ -140,7 +137,7 @@ void Player::update(float delta, Scene &scene) {
 	}
 }
 
-void Player::handal_keybord(key_msg msg) {
+void Player::handle_keyboard(key_msg msg) {
 	if (msg.key == key_A) {
 		if (msg.msg == ege::key_msg_down) {
 			_move_flags.set(MOVE_LEFT);
@@ -175,7 +172,7 @@ void Player::handal_keybord(key_msg msg) {
 	}
 }
 
-void Player::handal_mouse(mouse_msg msg) {
+void Player::handle_mouse(mouse_msg msg) {
 	_aim_x = static_cast<float>(msg.x);
 	_aim_y = static_cast<float>(msg.y);
 

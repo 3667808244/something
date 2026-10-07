@@ -133,18 +133,18 @@ void Scene::update(float delta, Scene &scene [[maybe_unused]]) {
 	_sweep();
 }
 
-void Scene::handal_keybord(key_msg msg) {
+void Scene::handle_keyboard(key_msg msg) {
 	for (auto &entry : _spirits) {
 		if (entry.alive && entry.spirit && !entry.spirit->is_invalid()) {
-			entry.spirit->handal_keybord(msg);
+			entry.spirit->handle_keyboard(msg);
 		}
 	}
 }
 
-void Scene::handal_mouse(mouse_msg msg) {
+void Scene::handle_mouse(mouse_msg msg) {
 	for (auto &entry : _spirits) {
 		if (entry.alive && entry.spirit && !entry.spirit->is_invalid()) {
-			entry.spirit->handal_mouse(msg);
+			entry.spirit->handle_mouse(msg);
 		}
 	}
 }

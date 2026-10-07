@@ -7,28 +7,17 @@
 #include "platform.h"
 #include "scene.h"
 
-constexpr float contact_speed_limit = 60.0f;
+// 必须高于 enemy_chase_speed(110)，否则玩家贴住敌人后无法脱身
+constexpr float contact_speed_limit = 150.0f;
 
-Actor::Actor(float x, float y, float width, float height, int window_width, int window_height)
-    : Rect(x, y, width, height) {
+Actor::Actor(float center_x, float center_y, float width, float height, int window_width, int window_height)
+    : Rect(center_x, center_y, width, height) {
 	_window_width = window_width;
 	_window_height = window_height;
 	_speed_x = 0.0f;
 	_speed_y = 0.0f;
 	_on_ground = false;
 }
-
-float Actor::left() const { return _x - half_width(); }
-
-float Actor::top() const { return _y - half_height(); }
-
-float Actor::right() const { return _x + half_width(); }
-
-float Actor::bottom() const { return _y + half_height(); }
-
-float Actor::center_x() const { return _x; }
-
-float Actor::center_y() const { return _y; }
 
 float Actor::speed_x() const { return _speed_x; }
 
@@ -45,17 +34,16 @@ float Actor::segment_hit_t(float x0, float y0, float x1, float y1) const {
 	return Rect::segment_aabb_hit_t(left(), top(), right(), bottom(), x0, y0, x1, y1);
 }
 
+// 只压水平速度：把整条速度向量一起缩放会连起跳速度也压掉，玩家贴住敌人后就跳不出去；
+// 而且敌人每帧都会重新赋值水平速度，这个阻尼对它们本来就不生效。
 void Actor::resolve_contacts(Scene &scene) {
 	scene.each<Actor>([&](Actor &other) {
 		if (&other == this || !overlaps(other)) {
 			return;
 		}
 
-		float speed = std::sqrt(_speed_x * _speed_x + _speed_y * _speed_y);
-		if (speed > contact_speed_limit) {
-			float factor = contact_speed_limit / speed;
-			_speed_x *= factor;
-			_speed_y *= factor;
+		if (std::abs(_speed_x) > contact_speed_limit) {
+			_speed_x = std::copysign(contact_speed_limit, _speed_x);
 		}
 	});
 }

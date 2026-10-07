@@ -12,7 +12,7 @@
 
 class App {
 	protected:
-		PIMAGE _window;
+		PIMAGE _target; // EGE 的默认绘制目标（nullptr 即窗口）
 		FrameTimer _frame_timer;
 		int _window_width, _window_height;
 		Scene _root_scene;
@@ -25,9 +25,9 @@ class App {
 
 		void _draw_crosshair();
 
-		void _handal_keybord(key_msg msg);
+		void _handle_keyboard(key_msg msg);
 
-		void _handal_mouse(mouse_msg msg);
+		void _handle_mouse(mouse_msg msg);
 
 	public:
 		App(int window_width, int window_height, const std::optional<std::string> &title = std::nullopt);

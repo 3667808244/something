@@ -89,10 +89,6 @@ void Bullet::update(float delta, Scene &scene) {
 	}
 }
 
-void Bullet::handal_keybord(key_msg msg [[maybe_unused]]) {}
-
-void Bullet::handal_mouse(mouse_msg msg [[maybe_unused]]) {}
-
 bool Bullet::is_invalid() const {
 	if (_hit) {
 		return true;

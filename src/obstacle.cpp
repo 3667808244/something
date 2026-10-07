@@ -2,14 +2,11 @@
 
 #include "define.h"
 
-Obstacle::Obstacle(float x, float y, float width, float height) : Rect(x, y, width, height) {}
+Obstacle::Obstacle(float center_x, float center_y, float width, float height)
+    : Rect(center_x, center_y, width, height) {}
 
 float Obstacle::segment_hit_t(float x0, float y0, float x1, float y1) const {
 	return Rect::segment_aabb_hit_t(left(), top(), right(), bottom(), x0, y0, x1, y1);
-}
-
-bool Obstacle::intersects_segment(float x0, float y0, float x1, float y1) const {
-	return segment_hit_t(x0, y0, x1, y1) >= 0.0f;
 }
 
 void Obstacle::draw(PIMAGE image) {

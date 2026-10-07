@@ -5,3 +5,6 @@ build/
 *.obj
 *.tmp.o
 *.tmp.obj
+
+# clangd index cache
+.cache/

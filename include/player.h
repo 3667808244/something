@@ -32,7 +32,7 @@ class Player : public Actor {
 		void _start_reload();
 
 	public:
-		Player(int _window_width, int _window_height);
+		Player(int window_width, int window_height, float spawn_x, float spawn_y);
 
 		int ammo() const;
 		int magazine_size() const;
@@ -43,8 +43,8 @@ class Player : public Actor {
 		int max_health() const;
 		bool is_invulnerable() const;
 
-		virtual void draw(PIMAGE image);
-		virtual void update(float delta, Scene &scene);
-		virtual void handal_keybord(key_msg msg);
-		virtual void handal_mouse(mouse_msg msg);
+		void draw(PIMAGE image) override;
+		void update(float delta, Scene &scene) override;
+		void handle_keyboard(key_msg msg) override;
+		void handle_mouse(mouse_msg msg) override;
 };
