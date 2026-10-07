@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "define.h"
+#include "enemy.h"
 #include "hit_effect.h"
 #include "obstacle.h"
 #include "scene.h"
@@ -10,6 +11,7 @@
 constexpr float bullet_length = 12.0f;
 constexpr float bullet_width = 3.0f;
 constexpr float bullet_gravity_scale = 0.5f;
+constexpr int bullet_damage = 1;
 
 Bullet::Bullet(float x, float y, float dir_x, float dir_y, float speed, int window_width, int window_height) {
 	_window_width = window_width;
@@ -54,13 +56,32 @@ void Bullet::update(float delta, Scene &scene) {
 	_x += _vel_x * delta;
 	_y += _vel_y * delta;
 
-	float hit_t = -1.0f;
+	float obstacle_t = -1.0f;
 	scene.each<Obstacle>([&](Obstacle &obstacle) {
 		float t = obstacle.segment_hit_t(previous_x, previous_y, _x, _y);
-		if (t >= 0.0f && (hit_t < 0.0f || t < hit_t)) {
-			hit_t = t;
+		if (t >= 0.0f && (obstacle_t < 0.0f || t < obstacle_t)) {
+			obstacle_t = t;
 		}
 	});
+
+	float enemy_t = -1.0f;
+	Enemy *enemy_hit = nullptr;
+	scene.each<Enemy>([&](Enemy &enemy) {
+		float t = enemy.segment_hit_t(previous_x, previous_y, _x, _y);
+		if (t >= 0.0f && (enemy_t < 0.0f || t < enemy_t)) {
+			enemy_t = t;
+			enemy_hit = &enemy;
+		}
+	});
+
+	// 取更近的那个：障碍物优先，避免隔着墙打到敌人
+	float hit_t = -1.0f;
+	if (obstacle_t >= 0.0f && (enemy_t < 0.0f || obstacle_t <= enemy_t)) {
+		hit_t = obstacle_t;
+	} else if (enemy_t >= 0.0f) {
+		hit_t = enemy_t;
+		enemy_hit->take_damage(bullet_damage);
+	}
 
 	if (hit_t >= 0.0f) {
 		_hit = true;

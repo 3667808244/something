@@ -4,27 +4,27 @@
 #include <cstddef>
 #include <random>
 
-#include "spirit.h"
+#include "actor.h"
 
 constexpr std::size_t MOVE_RIGHT = 0;
 constexpr std::size_t MOVE_LEFT = 1;
 
-class Player : public Spirit {
+class Player : public Actor {
 	protected:
-		int _window_width, _window_height;
-		float _x, _y, _speed_x, _speed_y;
 		std::bitset<2> _move_flags;
 		float _aim_x, _aim_y;
 		float _fire_cooldown;
 		float _move_ratio;
 		bool _firing;
-		bool _on_ground;
 		bool _jump_requested;
 		bool _jump_held;
 		bool _drop_through;
 		int _ammo;
 		float _reload_timer;
 		bool _reloading;
+		int _health;
+		float _invulnerable_timer;
+		float _spawn_x, _spawn_y;
 		std::mt19937 _rng;
 
 		void _fire(Scene &scene);
@@ -39,9 +39,12 @@ class Player : public Spirit {
 		bool is_reloading() const;
 		float reload_progress() const;
 
+		int health() const;
+		int max_health() const;
+		bool is_invulnerable() const;
+
 		virtual void draw(PIMAGE image);
 		virtual void update(float delta, Scene &scene);
 		virtual void handal_keybord(key_msg msg);
 		virtual void handal_mouse(mouse_msg msg);
-		virtual bool is_invalid() const;
 };

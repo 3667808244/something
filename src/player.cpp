@@ -7,13 +7,12 @@
 #include "bullet.h"
 #include "define.h"
 #include "ege/graphics.h"
-#include "obstacle.h"
-#include "platform.h"
+#include "enemy.h"
 #include "scene.h"
 
+constexpr float player_size = 20.0f;
 constexpr float speed_max = 300.0f;
 constexpr float acceleration = 1200.0f;
-constexpr float collision_box_size = 20.0f;
 constexpr float jump_speed = 420.0f;
 constexpr float fall_speed_max = 900.0f;
 constexpr float bullet_speed = 600.0f;
@@ -25,17 +24,15 @@ constexpr float spread_min_deg = 1.0f;
 constexpr float spread_max_deg = 8.0f;
 constexpr float spread_sigma_scale = 3.0f;
 constexpr float spread_smooth_rate = 6.0f;
+constexpr int player_max_health = 100;
+constexpr int contact_damage = 20;
+constexpr float invulnerable_duration = 1.0f;
 
 Player::Player(int window_width, int window_height)
-    : _rng(static_cast<std::mt19937::result_type>(std::random_device{}()) ^
+    : Actor(static_cast<float>(window_width) / 2, static_cast<float>(window_height) / 2, player_size,
+            player_size, window_width, window_height),
+      _rng(static_cast<std::mt19937::result_type>(std::random_device{}()) ^
            static_cast<std::mt19937::result_type>(std::chrono::steady_clock::now().time_since_epoch().count())) {
-	_window_height = window_height;
-	_window_width = window_width;
-	_x = static_cast<float>(window_width) / 2;
-	_y = static_cast<float>(window_height) / 2;
-	_speed_x = 0;
-	_speed_y = 0;
-	_on_ground = false;
 	_jump_requested = false;
 	_jump_held = false;
 	_drop_through = false;
@@ -47,12 +44,17 @@ Player::Player(int window_width, int window_height)
 	_ammo = magazine_capacity;
 	_reload_timer = 0.0f;
 	_reloading = false;
+	_health = player_max_health;
+	_invulnerable_timer = 0.0f;
+	_spawn_x = _x;
+	_spawn_y = _y;
 }
 
 void Player::draw(PIMAGE image) {
-	setfillcolor(rgb(255, 0, 0), image);
-	bar(static_cast<int>(_x - collision_box_size / 2), static_cast<int>(_y - collision_box_size / 2),
-		static_cast<int>(_x + collision_box_size / 2), static_cast<int>(_y + collision_box_size / 2), image);
+	bool blink = _invulnerable_timer > 0.0f && static_cast<int>(_invulnerable_timer * 12.0f) % 2 == 0;
+	setfillcolor(blink ? rgb(255, 255, 255) : rgb(255, 0, 0), image);
+	bar(static_cast<int>(_x - half_width()), static_cast<int>(_y - half_height()),
+	    static_cast<int>(_x + half_width()), static_cast<int>(_y + half_height()), image);
 }
 
 void Player::update(float delta, Scene &scene) {
@@ -84,64 +86,30 @@ void Player::update(float delta, Scene &scene) {
 	_x += _speed_x * delta;
 	_y += _speed_y * delta;
 
-	_x = std::clamp(_x, collision_box_size / 2, _window_width - collision_box_size / 2);
+	resolve_world(scene, previous_y, _drop_through);
+	resolve_contacts(scene);
 
-	_on_ground = false;
+	if (_invulnerable_timer > 0.0f) {
+		_invulnerable_timer -= delta;
+	}
 
-	float half = collision_box_size / 2.0f;
-	scene.each<Obstacle>([&](Obstacle &obstacle) {
-		float dx = _x - obstacle.center_x();
-		float dy = _y - obstacle.center_y();
-		float overlap_x = (half + obstacle.half_width()) - std::abs(dx);
-		float overlap_y = (half + obstacle.half_height()) - std::abs(dy);
-		if (overlap_x <= 0.0f || overlap_y <= 0.0f) {
+	// 接触扣血：无敌帧内或已经死亡的敌人不结算
+	scene.each<Enemy>([&](Enemy &enemy) {
+		if (_invulnerable_timer > 0.0f || enemy.is_dead() || !overlaps(enemy)) {
 			return;
 		}
 
-		if (overlap_x < overlap_y) {
-			_x += dx > 0.0f ? overlap_x : -overlap_x;
+		_health -= contact_damage;
+		_invulnerable_timer = invulnerable_duration;
+
+		if (_health <= 0) {
+			_health = player_max_health;
+			_x = _spawn_x;
+			_y = _spawn_y;
 			_speed_x = 0.0f;
-		} else {
-			_y += dy > 0.0f ? overlap_y : -overlap_y;
 			_speed_y = 0.0f;
-			if (dy < 0.0f) {
-				_on_ground = true;
-			}
 		}
 	});
-
-	if (!_drop_through) {
-		float previous_bottom = previous_y + half;
-		float bottom = _y + half;
-		scene.each<Platform>([&](Platform &platform) {
-			if (_speed_y <= 0.0f) {
-				return;
-			}
-			if (previous_bottom > platform.top() + 1e-3f) {
-				return;
-			}
-			if (bottom < platform.top()) {
-				return;
-			}
-			if (_x + half <= platform.left() || _x - half >= platform.right()) {
-				return;
-			}
-			_y = platform.top() - half;
-			_speed_y = 0.0f;
-			_on_ground = true;
-		});
-	}
-
-	float ground = _window_height - collision_box_size / 2;
-	float ceiling = collision_box_size / 2;
-	if (_y >= ground) {
-		_y = ground;
-		_speed_y = 0.0f;
-		_on_ground = true;
-	} else if (_y <= ceiling) {
-		_y = ceiling;
-		_speed_y = std::max(_speed_y, 0.0f);
-	}
 
 	float move_speed = std::sqrt(_speed_x * _speed_x + _speed_y * _speed_y);
 	float target_ratio = std::clamp(move_speed / speed_max, 0.0f, 1.0f);
@@ -263,4 +231,8 @@ bool Player::is_reloading() const { return _reloading; }
 
 float Player::reload_progress() const { return _reloading ? 1.0f - _reload_timer / reload_duration : 0.0f; }
 
-bool Player::is_invalid() const { return false; }
+int Player::health() const { return _health; }
+
+int Player::max_health() const { return player_max_health; }
+
+bool Player::is_invulnerable() const { return _invulnerable_timer > 0.0f; }

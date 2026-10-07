@@ -16,6 +16,10 @@ constexpr int hud_pip_height = 14;
 constexpr int hud_pip_gap = 4;
 constexpr int hud_pip_x = 12;
 constexpr int hud_pip_y = 12;
+constexpr int hud_health_x = 12;
+constexpr int hud_health_y = 34;
+constexpr int hud_health_width = 160;
+constexpr int hud_health_height = 10;
 
 App::App(int window_width, int window_height, const std::optional<std::string> &title) {
 	_window = nullptr;
@@ -76,6 +80,13 @@ void App::_draw_hud() {
 			setfillcolor(i < filled ? fill_color : rgb(70, 70, 80), _window);
 			bar(x, hud_pip_y, x + hud_pip_width, hud_pip_y + hud_pip_height, _window);
 		}
+
+		float ratio = static_cast<float>(player.health()) / static_cast<float>(player.max_health());
+		setfillcolor(rgb(60, 60, 70), _window);
+		bar(hud_health_x, hud_health_y, hud_health_x + hud_health_width, hud_health_y + hud_health_height, _window);
+		setfillcolor(ratio > 0.5f ? rgb(80, 200, 90) : rgb(230, 60, 60), _window);
+		bar(hud_health_x, hud_health_y, hud_health_x + static_cast<int>(hud_health_width * ratio),
+		    hud_health_y + hud_health_height, _window);
 	});
 }
 
