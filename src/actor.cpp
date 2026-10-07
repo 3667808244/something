@@ -11,7 +11,7 @@
 constexpr float contact_speed_limit = 150.0f;
 
 Actor::Actor(float center_x, float center_y, float width, float height, int window_width, int window_height)
-    : Rect(center_x, center_y, width, height) {
+	: Rect(center_x, center_y, width, height) {
 	_window_width = window_width;
 	_window_height = window_height;
 	_speed_x = 0.0f;
@@ -27,7 +27,7 @@ bool Actor::on_ground() const { return _on_ground; }
 
 bool Actor::overlaps(const Actor &other) const {
 	return std::abs(_x - other._x) < half_width() + other.half_width() &&
-	       std::abs(_y - other._y) < half_height() + other.half_height();
+		   std::abs(_y - other._y) < half_height() + other.half_height();
 }
 
 float Actor::segment_hit_t(float x0, float y0, float x1, float y1) const {

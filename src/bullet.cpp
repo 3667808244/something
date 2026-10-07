@@ -38,10 +38,10 @@ void Bullet::draw(PIMAGE image) {
 	float py = dx * bullet_width / 2.0f;
 
 	ege_point points[4] = {
-		{_x + hx + px, _y + hy + py},
-		{_x + hx - px, _y + hy - py},
-		{_x - hx - px, _y - hy - py},
-		{_x - hx + px, _y - hy + py},
+		{ _x + hx + px, _y + hy + py },
+		{ _x + hx - px, _y + hy - py },
+		{ _x - hx - px, _y - hy - py },
+		{ _x - hx + px, _y - hy + py },
 	};
 
 	setfillcolor(rgb(255, 255, 0), image);
@@ -95,6 +95,6 @@ bool Bullet::is_invalid() const {
 	}
 
 	float margin = bullet_length / 2.0f;
-	return _x < -margin || _x > static_cast<float>(_window_width) + margin ||
-	       _y < -margin || _y > static_cast<float>(_window_height) + margin;
+	return _x < -margin || _x > static_cast<float>(_window_width) + margin || _y < -margin ||
+		   _y > static_cast<float>(_window_height) + margin;
 }

@@ -100,7 +100,7 @@ void App::_draw_hud() {
 		bar(hud_health_x, hud_health_y, hud_health_x + hud_health_width, hud_health_y + hud_health_height, _target);
 		setfillcolor(ratio > 0.5f ? rgb(80, 200, 90) : rgb(230, 60, 60), _target);
 		bar(hud_health_x, hud_health_y, hud_health_x + static_cast<int>(hud_health_width * ratio),
-		    hud_health_y + hud_health_height, _target);
+			hud_health_y + hud_health_height, _target);
 	});
 }
 

@@ -12,7 +12,7 @@
 
 class App {
 	protected:
-		PIMAGE _target; // EGE 的默认绘制目标（nullptr 即窗口）
+		PIMAGE _target;	 // EGE 的默认绘制目标（nullptr 即窗口）
 		FrameTimer _frame_timer;
 		int _window_width, _window_height;
 		Scene _root_scene;

@@ -23,7 +23,7 @@ class Rect : public Spirit {
 
 		// 线段 (x0,y0)->(x1,y1) 与 AABB 的首个交点参数 t∈[0,1]；不相交返回 -1
 		static float segment_aabb_hit_t(float left, float top, float right, float bottom, float x0, float y0, float x1,
-		                                float y1);
+										float y1);
 
 		void update(float delta, Scene &scene) override;
 		bool is_invalid() const override;

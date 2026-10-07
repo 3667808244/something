@@ -29,7 +29,7 @@ constexpr int contact_damage = 20;
 constexpr float invulnerable_duration = 1.0f;
 
 Player::Player(int window_width, int window_height, float spawn_x, float spawn_y)
-    : Actor(spawn_x, spawn_y, player_size, player_size, window_width, window_height), _rng(make_random_seed()) {
+	: Actor(spawn_x, spawn_y, player_size, player_size, window_width, window_height), _rng(make_random_seed()) {
 	_jump_requested = false;
 	_jump_held = false;
 	_drop_through = false;
@@ -50,8 +50,8 @@ Player::Player(int window_width, int window_height, float spawn_x, float spawn_y
 void Player::draw(PIMAGE image) {
 	bool blink = _invulnerable_timer > 0.0f && static_cast<int>(_invulnerable_timer * 12.0f) % 2 == 0;
 	setfillcolor(blink ? rgb(255, 255, 255) : rgb(255, 0, 0), image);
-	bar(static_cast<int>(_x - half_width()), static_cast<int>(_y - half_height()),
-	    static_cast<int>(_x + half_width()), static_cast<int>(_y + half_height()), image);
+	bar(static_cast<int>(_x - half_width()), static_cast<int>(_y - half_height()), static_cast<int>(_x + half_width()),
+		static_cast<int>(_y + half_height()), image);
 }
 
 void Player::update(float delta, Scene &scene) {

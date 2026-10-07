@@ -14,9 +14,9 @@ inline constexpr SpiritId INVALID_SPIRIT_ID = 0;
 class Scene : public Spirit {
 	protected:
 		struct Entry {
-			SpiritId id = INVALID_SPIRIT_ID;
-			std::unique_ptr<Spirit> spirit;
-			bool alive = true;
+				SpiritId id = INVALID_SPIRIT_ID;
+				std::unique_ptr<Spirit> spirit;
+				bool alive = true;
 		};
 
 		std::vector<Entry> _spirits;

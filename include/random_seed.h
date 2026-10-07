@@ -8,7 +8,7 @@
 // 避免它们因为时钟分辨率相同而拿到同一颗种子。
 inline std::mt19937::result_type make_random_seed(std::uint64_t salt = 0) {
 	const auto clock_seed =
-	    static_cast<std::mt19937::result_type>(std::chrono::steady_clock::now().time_since_epoch().count());
+		static_cast<std::mt19937::result_type>(std::chrono::steady_clock::now().time_since_epoch().count());
 	const auto device_seed = static_cast<std::mt19937::result_type>(std::random_device{}());
 	return device_seed ^ clock_seed ^ static_cast<std::mt19937::result_type>(salt);
 }

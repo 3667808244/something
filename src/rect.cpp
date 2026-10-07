@@ -21,7 +21,7 @@ float Rect::half_width() const { return _width / 2.0f; }
 float Rect::half_height() const { return _height / 2.0f; }
 
 float Rect::segment_aabb_hit_t(float left, float top, float right, float bottom, float x0, float y0, float x1,
-                               float y1) {
+							   float y1) {
 	float t_min = 0.0f;
 	float t_max = 1.0f;
 

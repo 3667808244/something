@@ -14,9 +14,9 @@ constexpr float enemy_fall_speed_max = 900.0f;
 constexpr float enemy_chase_speed = 110.0f;
 constexpr float enemy_wander_enter = 80.0f;
 constexpr float enemy_wander_exit = 110.0f;
-constexpr float enemy_wander_width_base = 40.0f;          // |dy| = 0 时的游荡总宽度
-constexpr float enemy_wander_width_per_y = 1.0f / 3.0f;   // |dy| 每 1px 增加的宽度（即每 3px 加 1px）
-constexpr float enemy_wander_width_max = 120.0f;          // 游荡总宽度上限
+constexpr float enemy_wander_width_base = 40.0f;		 // |dy| = 0 时的游荡总宽度
+constexpr float enemy_wander_width_per_y = 1.0f / 3.0f;	 // |dy| 每 1px 增加的宽度（即每 3px 加 1px）
+constexpr float enemy_wander_width_max = 120.0f;		 // 游荡总宽度上限
 constexpr float enemy_wander_speed = 55.0f;
 constexpr float enemy_wander_arrive = 4.0f;
 constexpr int enemy_max_health = 3;
@@ -28,9 +28,9 @@ constexpr float enemy_health_bar_range = 160.0f;
 constexpr unsigned enemy_seed_salt = 2654435761u;
 
 Enemy::Enemy(float x, float y, int window_width, int window_height)
-    : Actor(x, y, enemy_size, enemy_size, window_width, window_height),
-      // 混入出生 x，避免同一批创建的敌人因为时钟分辨率相同而拿到同一颗种子
-      _rng(make_random_seed(static_cast<std::uint64_t>(static_cast<unsigned>(x)) * enemy_seed_salt)) {
+	: Actor(x, y, enemy_size, enemy_size, window_width, window_height),
+	  // 混入出生 x，避免同一批创建的敌人因为时钟分辨率相同而拿到同一颗种子
+	  _rng(make_random_seed(static_cast<std::uint64_t>(static_cast<unsigned>(x)) * enemy_seed_salt)) {
 	_health = enemy_max_health;
 	_dead = false;
 	_flash_timer = 0.0f;
@@ -80,7 +80,8 @@ float Enemy::_pick_wander_target(float avoid_direction) {
 
 void Enemy::draw(PIMAGE image) {
 	setfillcolor(_flash_timer > 0.0f ? rgb(255, 255, 255) : rgb(180, 80, 220), image);
-	bar(static_cast<int>(left()), static_cast<int>(top()), static_cast<int>(right()), static_cast<int>(bottom()), image);
+	bar(static_cast<int>(left()), static_cast<int>(top()), static_cast<int>(right()), static_cast<int>(bottom()),
+		image);
 
 	// 非满血 或 玩家在范围内，二者满足其一就画（并集）
 	if (!_player_nearby && _health >= enemy_max_health) {
