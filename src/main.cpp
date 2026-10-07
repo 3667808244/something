@@ -1,9 +1,18 @@
-#include "graphics.h"  // 引用ege图形库
+#include "app.h"
+#include "obstacle.h"
+#include "platform.h"
+#include "player.h"
 
 int main() {
-	initgraph(640, 480);	// 初始化，显示一个窗口，这里和 TC 略有区别
-	circle(200, 200, 100);	// 画圆，圆心(200, 200)，半径 100
-	getch();				// 暂停一下等待用户按键
-	closegraph();			// 关闭图形界面
+	App app(640, 480, "ege window");
+	app.add_spirit<Obstacle>(40, 400, 160, 20);
+	app.add_spirit<Obstacle>(240, 340, 120, 20);
+	app.add_spirit<Obstacle>(460, 280, 140, 20);
+	app.add_spirit<Obstacle>(0, 468, 640, 12);
+	app.add_spirit<Platform>(80, 300, 120, 12);
+	app.add_spirit<Platform>(300, 240, 160, 12);
+	app.add_spirit<Platform>(470, 380, 130, 12);
+	app.add_spirit<Player>(640, 480);
+	app.run();
 	return 0;
 }
