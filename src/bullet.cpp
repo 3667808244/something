@@ -1,19 +1,25 @@
 #include "bullet.h"
 
 #include <cmath>
+#include <vector>
 
 #include "define.h"
 #include "enemy.h"
+#include "explosion_effect.h"
 #include "hit_effect.h"
 #include "obstacle.h"
+#include "random_seed.h"
 #include "scene.h"
 
 constexpr float bullet_length = 12.0f;
 constexpr float bullet_width = 3.0f;
 constexpr float bullet_gravity_scale = 0.5f;
-constexpr int bullet_damage = 1;
+constexpr float explosive_radius = 30.0f;
+constexpr float explosive_chance_per_stack = 0.15f;
 
-Bullet::Bullet(float x, float y, float dir_x, float dir_y, float speed, int window_width, int window_height) {
+Bullet::Bullet(float x, float y, float dir_x, float dir_y, float speed, int damage, int explosive, int pierce,
+			   int window_width, int window_height)
+	: _rng(make_random_seed(static_cast<std::uint64_t>(static_cast<unsigned>(x)))) {
 	_window_width = window_width;
 	_window_height = window_height;
 	_x = x;
@@ -21,6 +27,48 @@ Bullet::Bullet(float x, float y, float dir_x, float dir_y, float speed, int wind
 	_vel_x = dir_x * speed;
 	_vel_y = dir_y * speed;
 	_hit = false;
+	_damage = damage;
+	_explosive = explosive;
+	_pierce = pierce;
+}
+
+bool Bullet::_already_hit(std::uint64_t serial) const {
+	for (std::uint64_t hit : _hit_enemies) {
+		if (hit == serial) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void Bullet::_explode(Scene &scene, float x, float y, const Enemy *direct) {
+	if (_explosive <= 0) {
+		return;
+	}
+
+	std::uniform_real_distribution<float> roll(0.0f, 1.0f);
+	if (roll(_rng) >= explosive_chance_per_stack * static_cast<float>(_explosive)) {
+		return;
+	}
+
+	// 先收集再结算，避免在遍历敌人的同时改动场景
+	std::vector<Enemy *> victims;
+	scene.each<Enemy>([&](Enemy &enemy) {
+		if (&enemy == direct) {
+			return;
+		}
+		float dx = enemy.center_x() - x;
+		float dy = enemy.center_y() - y;
+		if (dx * dx + dy * dy <= explosive_radius * explosive_radius) {
+			victims.push_back(&enemy);
+		}
+	});
+
+	for (Enemy *victim : victims) {
+		victim->take_damage(_damage, scene);
+	}
+
+	scene.add_spirit<ExplosionEffect>(x, y, explosive_radius);
 }
 
 void Bullet::draw(PIMAGE image) {
@@ -64,9 +112,13 @@ void Bullet::update(float delta, Scene &scene) {
 		}
 	});
 
+	// 已经穿透过的敌人不再重复结算
 	float enemy_t = -1.0f;
 	Enemy *enemy_hit = nullptr;
 	scene.each<Enemy>([&](Enemy &enemy) {
+		if (_already_hit(enemy.serial())) {
+			return;
+		}
 		float t = enemy.segment_hit_t(previous_x, previous_y, _x, _y);
 		if (t >= 0.0f && (enemy_t < 0.0f || t < enemy_t)) {
 			enemy_t = t;
@@ -76,16 +128,35 @@ void Bullet::update(float delta, Scene &scene) {
 
 	// 取更近的那个：障碍物优先，避免隔着墙打到敌人
 	float hit_t = -1.0f;
+	bool hit_obstacle = false;
 	if (obstacle_t >= 0.0f && (enemy_t < 0.0f || obstacle_t <= enemy_t)) {
 		hit_t = obstacle_t;
+		hit_obstacle = true;
 	} else if (enemy_t >= 0.0f) {
 		hit_t = enemy_t;
-		enemy_hit->take_damage(bullet_damage, scene);
 	}
 
-	if (hit_t >= 0.0f) {
+	if (hit_t < 0.0f) {
+		return;
+	}
+
+	float hit_x = previous_x + (_x - previous_x) * hit_t;
+	float hit_y = previous_y + (_y - previous_y) * hit_t;
+	scene.add_spirit<HitEffect>(hit_x, hit_y);
+
+	if (hit_obstacle) {
 		_hit = true;
-		scene.add_spirit<HitEffect>(previous_x + (_x - previous_x) * hit_t, previous_y + (_y - previous_y) * hit_t);
+		return;
+	}
+
+	enemy_hit->take_damage(_damage, scene);
+	_hit_enemies.push_back(enemy_hit->serial());
+	_explode(scene, hit_x, hit_y, enemy_hit);
+
+	if (_pierce > 0) {
+		--_pierce;
+	} else {
+		_hit = true;
 	}
 }
 

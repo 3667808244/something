@@ -5,6 +5,7 @@
 #include <random>
 
 #include "actor.h"
+#include "upgrade.h"
 
 constexpr std::size_t MOVE_RIGHT = 0;
 constexpr std::size_t MOVE_LEFT = 1;
@@ -28,9 +29,30 @@ class Player : public Actor {
 		float _pickup_radius;
 		std::mt19937 _rng;
 
+		// 受升级影响的数值：apply_modifiers() 每次都从基础值整体重算
+		int _max_health;
+		float _fire_interval;
+		int _magazine_capacity;
+		float _speed_limit;
+		int _bullet_damage;
+		int _explosive_stacks;
+		int _pierce_stacks;
+		int _lifesteal_per_kill;
+		int _thorns_stacks;
+		float _experience_gain;
+		float _armor;
+		int _armor_max;
+		float _armor_regen_timer;  // 脱战计时：受击清零，攒够就开始回甲
+		float _reload_duration;
+		int _shotgun_stacks;
+
 		void _fire(Scene &scene);
 		float _current_spread() const;
 		void _start_reload();
+		// 霰弹：一次射击消耗的弹药 / 实际射击间隔 / 本次弹丸数（含概率补足）
+		int _ammo_per_shot() const;
+		float _shot_interval() const;
+		int _roll_pellet_count();
 
 	public:
 		Player(int window_width, int window_height, float spawn_x, float spawn_y);
@@ -44,6 +66,14 @@ class Player : public Actor {
 		int max_health() const;
 		bool is_invulnerable() const;
 		float pickup_radius() const;
+		float experience_gain() const;
+		float armor() const;
+		int max_armor() const;
+
+		// 按升级层数重算全部数值（当前血量按同一比例回复，向上取整）
+		void apply_modifiers(const UpgradeModifiers &mods);
+		// 击杀回调：汲取在这里结算
+		void on_enemy_killed();
 
 		void draw(PIMAGE image) override;
 		void update(float delta, Scene &scene) override;

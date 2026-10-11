@@ -29,6 +29,9 @@ constexpr float enemy_health_bar_range = 160.0f;
 constexpr int enemy_exp_value = 5;
 constexpr unsigned enemy_seed_salt = 2654435761u;
 
+// 敌人唯一序号，供子弹穿透去重
+std::uint64_t next_enemy_serial = 1;
+
 Enemy::Enemy(float x, float y, int window_width, int window_height)
 	: Actor(x, y, enemy_size, enemy_size, window_width, window_height),
 	  // 混入出生 x，避免同一批创建的敌人因为时钟分辨率相同而拿到同一颗种子
@@ -42,7 +45,8 @@ Enemy::Enemy(float x, float y, int window_width, int window_height)
 	_wander_center_x = x;
 	_wander_radius = enemy_wander_width_base / 2.0f;
 	_wander_target_x = x;
-	_loot_dropped = false;
+	_death_handled = false;
+	_serial = next_enemy_serial++;
 }
 
 void Enemy::take_damage(int amount, Scene &scene) {
@@ -57,21 +61,25 @@ void Enemy::take_damage(int amount, Scene &scene) {
 		_health = 0;
 		_dead = true;
 		// 敌人 _dead 之后 Scene 不会再调用它的 update，掉落必须在这里生成
-		_drop_loot(scene);
+		_on_death(scene);
 	}
 }
 
-void Enemy::_drop_loot(Scene &scene) {
-	if (_loot_dropped) {
+void Enemy::_on_death(Scene &scene) {
+	if (_death_handled) {
 		return;
 	}
-	_loot_dropped = true;
+	_death_handled = true;
 	scene.add_spirit<ExperienceOrb>(_x, _y, enemy_exp_value, _window_width, _window_height);
+	// 击杀通知：玩家侧的汲取在这里结算
+	scene.each<Player>([&](Player &player) { player.on_enemy_killed(); });
 }
 
 int Enemy::health() const { return _health; }
 
 bool Enemy::is_dead() const { return _dead; }
+
+std::uint64_t Enemy::serial() const { return _serial; }
 
 float Enemy::_pick_wander_target(float avoid_direction) {
 	float lo = std::max(half_width(), _wander_center_x - _wander_radius);

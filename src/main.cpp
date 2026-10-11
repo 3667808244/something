@@ -3,6 +3,7 @@
 #include "player.h"
 #include "progression.h"
 #include "spawner.h"
+#include "upgrade_system.h"
 
 namespace {
 
@@ -49,6 +50,8 @@ int main() {
 	app.add_spirit<Player>(window_width, window_height, level.player_x, level.player_y);
 	// 经验/等级系统；放在最后，升级提示文字盖在其它实体之上
 	app.add_spirit<Progression>(window_width);
+	// 升级卡系统：跟随等级发卡；覆盖层由 App 在 HUD 之后绘制
+	app.add_spirit<UpgradeSystem>(window_width, window_height);
 	app.run();
 	return 0;
 }

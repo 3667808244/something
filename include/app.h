@@ -29,6 +29,9 @@ class App {
 
 		void _handle_mouse(mouse_msg msg);
 
+		// 是否有升级卡正在等待选择（是则暂停物理、输入只给升级系统）
+		bool _is_choosing();
+
 	public:
 		App(int window_width, int window_height, const std::optional<std::string> &title = std::nullopt);
 

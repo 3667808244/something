@@ -23,6 +23,11 @@ flags = ["-static"]
 link_dirs = ["lib"]
 system_target = ["graphics", "gdi32", "gdiplus"]
 
+# release 用 Windows 子系统（GUI），不弹命令行窗口；debug 保持控制台便于调试
+[link.profile.release]
+flags = ["-mwindows"]
+msvc_flags = ["/SUBSYSTEM:WINDOWS"]
+
 [depends]
 lib = []
 

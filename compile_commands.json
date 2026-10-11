@@ -136,6 +136,30 @@
       "-g",
       "-O0",
       "-IE:\\cpp\\projects\\ege-projects\\something\\include",
+      "src/explosion_effect.cpp",
+      "-o",
+      "build/src/explosion_effect.o"
+    ],
+    "directory": "E:\\cpp\\projects\\ege-projects\\something",
+    "file": "src/explosion_effect.cpp"
+  },
+  {
+    "arguments": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "-DEZMK=1",
+      "-DEZMK_VERSION=\"1.4.9\"",
+      "-DEZMK_PROJECT_NAME=\"something\"",
+      "-DEZMK_PROJECT_VERSION=\"0.1.0\"",
+      "-DEZMK_PROJECT_TYPE=\"executable\"",
+      "-DEZMK_LANG=\"CPP17\"",
+      "-DEZMK_STDLIB=\"libstdcxx\"",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O0",
+      "-IE:\\cpp\\projects\\ege-projects\\something\\include",
       "src/frame_timer.cpp",
       "-o",
       "build/src/frame_timer.o"
@@ -430,5 +454,53 @@
     ],
     "directory": "E:\\cpp\\projects\\ege-projects\\something",
     "file": "src/spawner.cpp"
+  },
+  {
+    "arguments": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "-DEZMK=1",
+      "-DEZMK_VERSION=\"1.4.9\"",
+      "-DEZMK_PROJECT_NAME=\"something\"",
+      "-DEZMK_PROJECT_VERSION=\"0.1.0\"",
+      "-DEZMK_PROJECT_TYPE=\"executable\"",
+      "-DEZMK_LANG=\"CPP17\"",
+      "-DEZMK_STDLIB=\"libstdcxx\"",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O0",
+      "-IE:\\cpp\\projects\\ege-projects\\something\\include",
+      "src/upgrade.cpp",
+      "-o",
+      "build/src/upgrade.o"
+    ],
+    "directory": "E:\\cpp\\projects\\ege-projects\\something",
+    "file": "src/upgrade.cpp"
+  },
+  {
+    "arguments": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "-DEZMK=1",
+      "-DEZMK_VERSION=\"1.4.9\"",
+      "-DEZMK_PROJECT_NAME=\"something\"",
+      "-DEZMK_PROJECT_VERSION=\"0.1.0\"",
+      "-DEZMK_PROJECT_TYPE=\"executable\"",
+      "-DEZMK_LANG=\"CPP17\"",
+      "-DEZMK_STDLIB=\"libstdcxx\"",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O0",
+      "-IE:\\cpp\\projects\\ege-projects\\something\\include",
+      "src/upgrade_system.cpp",
+      "-o",
+      "build/src/upgrade_system.o"
+    ],
+    "directory": "E:\\cpp\\projects\\ege-projects\\something",
+    "file": "src/upgrade_system.cpp"
   }
 ]

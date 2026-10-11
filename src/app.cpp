@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cwchar>
 #include <optional>
 #include <string>
 #include <utility>
@@ -10,6 +11,7 @@
 #include "ege/graphics.h"
 #include "player.h"
 #include "progression.h"
+#include "upgrade_system.h"
 
 constexpr int crosshair_arm = 8;
 constexpr int crosshair_gap = 3;
@@ -23,12 +25,17 @@ constexpr int hud_health_x = 12;
 constexpr int hud_health_y = 34;
 constexpr int hud_health_width = 160;
 constexpr int hud_health_height = 10;
+constexpr int hud_armor_x = 12;
+constexpr int hud_armor_y = 46;
+constexpr int hud_armor_width = 160;
+constexpr int hud_armor_height = 5;
+constexpr int hud_armor_font_height = 13;
 constexpr int hud_xp_x = 12;
-constexpr int hud_xp_y = 52;
+constexpr int hud_xp_y = 60;
 constexpr int hud_xp_width = 160;
 constexpr int hud_xp_height = 6;
-constexpr int hud_xp_label_gap = 8;
-constexpr int hud_xp_font_height = 14;
+constexpr int hud_label_gap = 8;
+constexpr int hud_value_font_height = 14;
 
 // 单帧最多消化的真实时间，避免窗口被拖动/系统卡顿后物理一次跨出好几秒
 constexpr float max_frame_time = 0.25f;
@@ -58,17 +65,49 @@ void App::run() {
 	_frame_timer.reset();
 	float accumulator = 0.0f;
 	while (is_run() && !_root_scene.is_invalid()) {
+		bool choosing = _is_choosing();
+
 		while (kbmsg()) {
-			_handle_keyboard(getkey());
+			key_msg msg = getkey();
+			if (choosing) {
+				// 选卡期间"按下"只给升级系统，避免顺手开枪/跳跃；
+				// 但"抬起"必须继续转发，否则选卡时松开 A/D 清不掉 _move_flags
+				_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.handle_keyboard(msg); });
+				if (msg.msg == ege::key_msg_up) {
+					_handle_keyboard(msg);
+				}
+			} else {
+				_handle_keyboard(msg);
+			}
 		}
 		while (mousemsg()) {
-			_handle_mouse(getmouse());
+			mouse_msg msg = getmouse();
+			if (choosing) {
+				_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.handle_mouse(msg); });
+				// 同理：松开左键要清掉 _firing
+				if (msg.is_up()) {
+					_handle_mouse(msg);
+				}
+			} else {
+				_handle_mouse(msg);
+			}
 		}
 
-		accumulator += std::min(_frame_timer.tick(), max_frame_time);
-		while (accumulator >= physics_step && !_root_scene.is_invalid()) {
-			_update(physics_step);
-			accumulator -= physics_step;
+		if (choosing) {
+			// 暂停物理；升级系统仍然要处理已经排队的选卡
+			accumulator = 0.0f;
+			_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.modal_update(_root_scene); });
+		} else {
+			accumulator += std::min(_frame_timer.tick(), max_frame_time);
+			while (accumulator >= physics_step && !_root_scene.is_invalid()) {
+				_update(physics_step);
+				accumulator -= physics_step;
+				if (_is_choosing()) {
+					// 这一帧中途弹卡了，剩下的时间不再推进
+					accumulator = 0.0f;
+					break;
+				}
+			}
 		}
 
 		cleardevice(_target);
@@ -82,7 +121,11 @@ void App::_update(float delta) { _root_scene.update(delta, _root_scene); }
 void App::_draw() {
 	_root_scene.draw(_target);
 	_draw_hud();
-	_draw_crosshair();
+	if (!_is_choosing()) {
+		_draw_crosshair();
+	}
+	// 升级卡覆盖层最后画，保证压在最上面
+	_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.draw_overlay(_target); });
 }
 
 void App::_draw_hud() {
@@ -108,6 +151,29 @@ void App::_draw_hud() {
 		setfillcolor(ratio > 0.5f ? rgb(80, 200, 90) : rgb(230, 60, 60), _target);
 		bar(hud_health_x, hud_health_y, hud_health_x + static_cast<int>(hud_health_width * ratio),
 			hud_health_y + hud_health_height, _target);
+
+		// 血条右侧的数字
+		setfont(hud_value_font_height, 0, "Consolas", _target);
+		setbkmode(TRANSPARENT, _target);
+		settextcolor(rgb(220, 235, 245), _target);
+		std::string health_text = std::to_string(player.health()) + "/" + std::to_string(player.max_health());
+		outtextxy(hud_health_x + hud_health_width + hud_label_gap, hud_health_y - 4, health_text.c_str(), _target);
+
+		// 护甲条：点了护甲升级才显示
+		if (player.max_armor() > 0) {
+			float armor_ratio = player.armor() / static_cast<float>(player.max_armor());
+			setfillcolor(rgb(40, 54, 76), _target);
+			bar(hud_armor_x, hud_armor_y, hud_armor_x + hud_armor_width, hud_armor_y + hud_armor_height, _target);
+			setfillcolor(rgb(90, 170, 235), _target);
+			bar(hud_armor_x, hud_armor_y, hud_armor_x + static_cast<int>(hud_armor_width * armor_ratio),
+				hud_armor_y + hud_armor_height, _target);
+
+			wchar_t armor_text[32];
+			std::swprintf(armor_text, 32, L"甲 %d/%d", static_cast<int>(player.armor()), player.max_armor());
+			setfont(hud_armor_font_height, 0, L"Microsoft YaHei", _target);
+			settextcolor(rgb(170, 210, 245), _target);
+			outtextxy(hud_armor_x + hud_armor_width + hud_label_gap, hud_armor_y - 6, armor_text, _target);
+		}
 	});
 
 	// 经验条 + 等级：Lv 数字画在条的右侧
@@ -121,11 +187,11 @@ void App::_draw_hud() {
 			bar(hud_xp_x, hud_xp_y, hud_xp_x + filled, hud_xp_y + hud_xp_height, _target);
 		}
 
-		setfont(hud_xp_font_height, 0, "Consolas", _target);
+		setfont(hud_value_font_height, 0, "Consolas", _target);
 		setbkmode(TRANSPARENT, _target);
-		setlinecolor(rgb(200, 240, 255), _target);
+		settextcolor(rgb(200, 240, 255), _target);
 		std::string label = "Lv " + std::to_string(progression.level());
-		outtextxy(hud_xp_x + hud_xp_width + hud_xp_label_gap, hud_xp_y - 4, label.c_str(), _target);
+		outtextxy(hud_xp_x + hud_xp_width + hud_label_gap, hud_xp_y - 4, label.c_str(), _target);
 	});
 }
 
@@ -146,6 +212,16 @@ void App::_draw_crosshair() {
 void App::_handle_keyboard(key_msg msg) { _root_scene.handle_keyboard(msg); }
 
 void App::_handle_mouse(mouse_msg msg) { _root_scene.handle_mouse(msg); }
+
+bool App::_is_choosing() {
+	bool choosing = false;
+	_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) {
+		if (system.is_choosing()) {
+			choosing = true;
+		}
+	});
+	return choosing;
+}
 
 SpiritId App::add_spirit(std::unique_ptr<Spirit> spirit) { return _root_scene.add_spirit(std::move(spirit)); }
 
