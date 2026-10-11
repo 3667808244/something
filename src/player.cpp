@@ -407,3 +407,13 @@ float Player::experience_gain() const { return _experience_gain; }
 float Player::armor() const { return _armor; }
 
 int Player::max_armor() const { return _armor_max; }
+
+float Player::fire_interval() const { return _fire_interval; }
+
+int Player::bullet_damage() const { return _bullet_damage; }
+
+float Player::speed_limit() const { return _speed_limit; }
+
+float Player::reload_duration() const { return _reload_duration; }
+
+int Player::lifesteal_per_kill() const { return _lifesteal_per_kill; }

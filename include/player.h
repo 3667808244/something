@@ -71,6 +71,13 @@ class Player : public Actor {
 		float armor() const;
 		int max_armor() const;
 
+		// 暂停界面「当前属性」用
+		float fire_interval() const;
+		int bullet_damage() const;
+		float speed_limit() const;
+		float reload_duration() const;
+		int lifesteal_per_kill() const;
+
 		// 按升级层数重算全部数值（当前血量按同一比例回复，向上取整）
 		void apply_modifiers(const UpgradeModifiers &mods);
 		// 击杀回调：汲取在这里结算；精英怪额外多回一点

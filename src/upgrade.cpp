@@ -80,6 +80,26 @@ void upgrade_add_stack(UpgradeModifiers &mods, UpgradeId id) {
 	}
 }
 
+int upgrade_stack_count(const UpgradeModifiers &mods, UpgradeId id) {
+	switch (id) {
+		case UpgradeId::FireRate: return mods.fire_rate;
+		case UpgradeId::Magazine: return mods.magazine;
+		case UpgradeId::MaxHealth: return mods.max_health;
+		case UpgradeId::MoveSpeed: return mods.move_speed;
+		case UpgradeId::BulletDamage: return mods.bullet_damage;
+		case UpgradeId::Armor: return mods.armor;
+		case UpgradeId::ReloadSpeed: return mods.reload_speed;
+		case UpgradeId::Explosive: return mods.explosive;
+		case UpgradeId::Lifesteal: return mods.lifesteal;
+		case UpgradeId::Magnet: return mods.magnet;
+		case UpgradeId::Pierce: return mods.pierce;
+		case UpgradeId::Thorns: return mods.thorns;
+		case UpgradeId::ExperienceGain: return mods.experience_gain;
+		case UpgradeId::Shotgun: return mods.shotgun;
+	}
+	return 0;
+}
+
 void upgrade_draw_card(PIMAGE image, const UpgradeDef &def, int index, int stacks, int left, int top, int width,
 					   int height, bool highlighted) {
 	int right = left + width;

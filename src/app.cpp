@@ -233,9 +233,25 @@ void App::_draw() {
 	}
 	// 升级卡覆盖层
 	_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.draw_overlay(_target); });
-	// 暂停菜单压在最上面
+	// 暂停菜单压在最上面：顺便把玩家的属性快照一起交给它画
 	if (_pause_menu.is_open()) {
-		_pause_menu.draw(_target);
+		PauseInfo info;
+		_root_scene.each<Player>([&](Player &player) {
+			info.health = player.health();
+			info.max_health = player.max_health();
+			info.armor = static_cast<int>(player.armor());
+			info.max_armor = player.max_armor();
+			info.magazine = player.magazine_size();
+			info.bullet_damage = player.bullet_damage();
+			info.fire_interval = player.fire_interval();
+			info.move_speed = player.speed_limit();
+			info.reload_duration = player.reload_duration();
+			info.lifesteal = player.lifesteal_per_kill();
+			info.experience_gain = player.experience_gain();
+			info.pickup_radius = player.pickup_radius();
+		});
+		_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { info.modifiers = system.modifiers(); });
+		_pause_menu.draw(_target, info);
 	}
 }
 

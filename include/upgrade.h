@@ -60,6 +60,9 @@ const UpgradeDef &upgrade_def(UpgradeId id);
 const std::vector<UpgradeId> &upgrade_pool(UpgradeTier tier);
 void upgrade_add_stack(UpgradeModifiers &mods, UpgradeId id);
 
+// 读取某个升级当前叠了几层（暂停界面的「升级层数」用）
+int upgrade_stack_count(const UpgradeModifiers &mods, UpgradeId id);
+
 // 绘制一张升级卡（普通=蓝灰，高级=金色），index 用于显示 [1]/[2]/[3]
 void upgrade_draw_card(PIMAGE image, const UpgradeDef &def, int index, int stacks, int left, int top, int width,
 					   int height, bool highlighted);
