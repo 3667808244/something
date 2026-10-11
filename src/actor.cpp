@@ -26,19 +26,17 @@ float Actor::speed_y() const { return _speed_y; }
 bool Actor::on_ground() const { return _on_ground; }
 
 bool Actor::overlaps(const Actor &other) const {
-	return std::abs(_x - other._x) < half_width() + other.half_width() &&
-		   std::abs(_y - other._y) < half_height() + other.half_height();
+	return aabb_overlap(_x, _y, half_width(), half_height(), other._x, other._y, other.half_width(),
+						other.half_height());
 }
 
-float Actor::segment_hit_t(float x0, float y0, float x1, float y1) const {
-	return Rect::segment_aabb_hit_t(left(), top(), right(), bottom(), x0, y0, x1, y1);
-}
+bool Actor::is_solid() const { return true; }
 
 // 只压水平速度：把整条速度向量一起缩放会连起跳速度也压掉，玩家贴住敌人后就跳不出去；
 // 而且敌人每帧都会重新赋值水平速度，这个阻尼对它们本来就不生效。
 void Actor::resolve_contacts(Scene &scene) {
 	scene.each<Actor>([&](Actor &other) {
-		if (&other == this || !overlaps(other)) {
+		if (&other == this || !other.is_solid() || !overlaps(other)) {
 			return;
 		}
 

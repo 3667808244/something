@@ -31,6 +31,8 @@ class Progression : public Spirit {
 		float progress() const;
 
 		void draw(PIMAGE image) override;
+		// 等级提示的覆盖层：由 App 在所有实体之后绘制，避免被新生成的敌人/子弹盖住
+		void draw_overlay(PIMAGE image);
 		void update(float delta, Scene &scene) override;
 		bool is_invalid() const override;
 };

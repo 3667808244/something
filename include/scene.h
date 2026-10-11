@@ -58,6 +58,7 @@ class Scene : public Spirit {
 			}
 		}
 
+		// contains / size 为预留接口：目前无调用点
 		bool contains(SpiritId id) const;
 		std::size_t size() const;
 		void clear();

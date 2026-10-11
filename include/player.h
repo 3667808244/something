@@ -64,6 +64,7 @@ class Player : public Actor {
 
 		int health() const;
 		int max_health() const;
+		// 预留接口：目前无调用点
 		bool is_invulnerable() const;
 		float pickup_radius() const;
 		float experience_gain() const;

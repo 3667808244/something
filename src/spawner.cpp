@@ -25,11 +25,6 @@ constexpr float node_core_radius = 2.0f;
 constexpr float crowding_radius = 130.0f;
 constexpr unsigned spawner_seed_salt = 0x5eed5eedu;
 
-bool aabb_overlap(float cx, float cy, float half_w, float half_h, const Rect &rect) {
-	return std::abs(cx - rect.center_x()) < half_w + rect.half_width() &&
-		   std::abs(cy - rect.center_y()) < half_h + rect.half_height();
-}
-
 }  // namespace
 
 Spawner::Spawner(std::vector<SpawnPointDef> points, int window_width, int window_height, const SpawnerConfig &config)
@@ -60,12 +55,14 @@ bool Spawner::_is_valid_spawn(float x, float y, Scene &scene) {
 
 	bool valid = true;
 	scene.each<Obstacle>([&](Obstacle &obstacle) {
-		if (aabb_overlap(x, y, half, half, obstacle)) {
+		if (aabb_overlap(x, y, half, half, obstacle.center_x(), obstacle.center_y(), obstacle.half_width(),
+						 obstacle.half_height())) {
 			valid = false;
 		}
 	});
 	scene.each<Platform>([&](Platform &platform) {
-		if (aabb_overlap(x, y, half, half, platform)) {
+		if (aabb_overlap(x, y, half, half, platform.center_x(), platform.center_y(), platform.half_width(),
+						 platform.half_height())) {
 			valid = false;
 		}
 	});
@@ -101,6 +98,11 @@ void Spawner::update(float delta, Scene &scene) {
 	std::vector<std::pair<float, float>> enemies;
 	scene.each<Enemy>([&](Enemy &enemy) { enemies.emplace_back(enemy.center_x(), enemy.center_y()); });
 
+	// 每帧都重新校验：冷却期和满员时也保持红/绿是当前帧的真实结果，不会停在旧值
+	for (auto &node : _nodes) {
+		node.blocked = !_is_valid_spawn(node.x, node.y, scene);
+	}
+
 	if (static_cast<int>(enemies.size()) >= _config.max_alive) {
 		return;
 	}
@@ -112,12 +114,10 @@ void Spawner::update(float delta, Scene &scene) {
 		if (node.cooldown > 0.0f) {
 			continue;
 		}
-		if (!_is_valid_spawn(node.x, node.y, scene)) {
-			node.blocked = true;
+		if (node.blocked) {
 			node.cooldown = _config.retry_delay;
 			continue;
 		}
-		node.blocked = false;
 		float score = _crowding(node.x, node.y, enemies);
 		if (best == nullptr || score < best_score) {
 			best = &node;

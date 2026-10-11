@@ -26,6 +26,7 @@ class UpgradeSystem : public Spirit {
 		std::deque<int> _pending_levels;  // 欠着的选卡，元素是触发它的等级
 		std::array<UpgradeId, offer_count> _offered{};
 		std::size_t _offered_size = 0;
+		UpgradeTier _offered_tier = UpgradeTier::Common;  // 实际发出的档位（高级池点满时会降级发普通卡）
 		bool _choosing = false;
 		int _hover = -1;
 		int _pending_pick = -1;
@@ -40,7 +41,11 @@ class UpgradeSystem : public Spirit {
 
 		UpgradeTier _tier_for_level(int level) const;
 		int _stack_count(UpgradeId id) const;
+		// 收集某档当前可发的卡；返回是否至少有一张。先按排除规则收集，不足三张再放宽排除（上限永不放宽）
+		bool _collect_candidates(UpgradeTier tier, std::vector<UpgradeId> &out) const;
 		void _open_cards(int level);
+		// 打开下一批待选的卡；某等级确实无卡可发时丢弃该等级，保证 _pending_levels 不会卡住
+		void _advance_cards();
 		void _pick(std::size_t index, Scene &scene);
 		void _recompute();
 		void _apply(Scene &scene);

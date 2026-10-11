@@ -25,6 +25,13 @@ class Rect : public Spirit {
 		static float segment_aabb_hit_t(float left, float top, float right, float bottom, float x0, float y0, float x1,
 										float y1);
 
+		// 本矩形的 AABB 与线段 (x0,y0)->(x1,y1) 的首个交点参数；不相交返回 -1。
+		// Actor / Obstacle 共用这一份实现，不再各自包一层。
+		float segment_hit_t(float x0, float y0, float x1, float y1) const;
+
 		void update(float delta, Scene &scene) override;
 		bool is_invalid() const override;
 };
+
+// 两个以中心点定义的 AABB 是否重叠（Actor::overlaps 与 Spawner 的生成校验共用）
+bool aabb_overlap(float ax, float ay, float ahalf_w, float ahalf_h, float bx, float by, float bhalf_w, float bhalf_h);

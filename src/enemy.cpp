@@ -29,8 +29,12 @@ constexpr float enemy_health_bar_range = 160.0f;
 constexpr int enemy_exp_value = 5;
 constexpr unsigned enemy_seed_salt = 2654435761u;
 
-// 敌人唯一序号，供子弹穿透去重
+namespace {
+
+// 敌人唯一序号，供子弹穿透去重。内部链接，避免和其它翻译单元重名
 std::uint64_t next_enemy_serial = 1;
+
+}  // namespace
 
 Enemy::Enemy(float x, float y, int window_width, int window_height)
 	: Actor(x, y, enemy_size, enemy_size, window_width, window_height),

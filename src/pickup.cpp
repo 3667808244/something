@@ -31,6 +31,8 @@ int Pickup::value() const { return _value; }
 
 bool Pickup::is_collected() const { return _collected; }
 
+bool Pickup::is_solid() const { return false; }
+
 bool Pickup::blink_hidden() const {
 	if (_life > pickup_blink_time) {
 		return false;

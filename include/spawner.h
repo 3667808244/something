@@ -56,5 +56,6 @@ class Spawner : public Spirit {
 		void handle_keyboard(key_msg msg) override;
 		bool is_invalid() const override;
 
+		// 预留接口：目前无调用点
 		std::size_t spawned_total() const;
 };

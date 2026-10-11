@@ -1,11 +1,13 @@
 #include "experience_orb.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <random>
 
 #include "define.h"
 #include "hit_effect.h"
+#include "player.h"
 #include "progression.h"
 #include "random_seed.h"
 #include "scene.h"
@@ -34,8 +36,10 @@ ExperienceOrb::ExperienceOrb(float x, float y, int value, int window_width, int 
 	_speed_y = pop(rng);
 }
 
-void ExperienceOrb::apply(Scene &scene, Player &player [[maybe_unused]]) {
-	scene.each<Progression>([&](Progression &progression) { progression.add_experience(_value); });
+void ExperienceOrb::apply(Scene &scene, Player &player) {
+	// 经验加成（求知欲）在这里结算：round 到最近整数
+	int gain = std::max(0, static_cast<int>(std::lround(static_cast<float>(_value) * player.experience_gain())));
+	scene.each<Progression>([&](Progression &progression) { progression.add_experience(gain); });
 	// 拾取反馈：复用已有的命中爆闪
 	scene.add_spirit<HitEffect>(_x, _y);
 }

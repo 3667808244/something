@@ -46,6 +46,7 @@ class App {
 			return _root_scene.add_spirit<T>(std::forward<Args>(args)...);
 		}
 
+		// 预留接口：目前无调用点
 		bool remove_spirit(SpiritId id);
 
 		Spirit *find_spirit(SpiritId id);

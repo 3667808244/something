@@ -65,16 +65,19 @@ void App::run() {
 	_frame_timer.reset();
 	float accumulator = 0.0f;
 	while (is_run() && !_root_scene.is_invalid()) {
+		// 每帧都取一次时间：选卡暂停时也刷新计时基准，恢复后不会把整段选卡时间一次性补成物理步
+		float frame_time = _frame_timer.tick();
 		bool choosing = _is_choosing();
 
 		while (kbmsg()) {
 			key_msg msg = getkey();
 			if (choosing) {
 				// 选卡期间"按下"只给升级系统，避免顺手开枪/跳跃；
-				// 但"抬起"必须继续转发，否则选卡时松开 A/D 清不掉 _move_flags
-				_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.handle_keyboard(msg); });
+				// 但"抬起"必须继续广播，否则选卡时松开 A/D 清不掉 _move_flags
 				if (msg.msg == ege::key_msg_up) {
 					_handle_keyboard(msg);
+				} else {
+					_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.handle_keyboard(msg); });
 				}
 			} else {
 				_handle_keyboard(msg);
@@ -83,10 +86,11 @@ void App::run() {
 		while (mousemsg()) {
 			mouse_msg msg = getmouse();
 			if (choosing) {
-				_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.handle_mouse(msg); });
-				// 同理：松开左键要清掉 _firing
+				// 只把"移动/按下"给升级系统；"抬起"广播出去清掉 _firing
 				if (msg.is_up()) {
 					_handle_mouse(msg);
+				} else {
+					_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.handle_mouse(msg); });
 				}
 			} else {
 				_handle_mouse(msg);
@@ -98,7 +102,7 @@ void App::run() {
 			accumulator = 0.0f;
 			_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.modal_update(_root_scene); });
 		} else {
-			accumulator += std::min(_frame_timer.tick(), max_frame_time);
+			accumulator += std::min(frame_time, max_frame_time);
 			while (accumulator >= physics_step && !_root_scene.is_invalid()) {
 				_update(physics_step);
 				accumulator -= physics_step;
@@ -120,6 +124,8 @@ void App::_update(float delta) { _root_scene.update(delta, _root_scene); }
 
 void App::_draw() {
 	_root_scene.draw(_target);
+	// 等级提示画在所有实体之上：动态生成的敌人/子弹是追加进场景的，会盖住普通绘制层
+	_root_scene.each<Progression>([&](Progression &progression) { progression.draw_overlay(_target); });
 	_draw_hud();
 	if (!_is_choosing()) {
 		_draw_crosshair();
@@ -139,13 +145,33 @@ void App::_draw_hud() {
 			fill_color = rgb(255, 140, 0);
 		}
 
-		for (int i = 0; i < capacity; ++i) {
-			int x = hud_pip_x + i * (hud_pip_width + hud_pip_gap);
-			setfillcolor(i < filled ? fill_color : rgb(70, 70, 80), _target);
-			bar(x, hud_pip_y, x + hud_pip_width, hud_pip_y + hud_pip_height, _target);
+		// 弹匣容量随升级无限增长：pip 放不下时改用压缩长条 + 数字，避免画出屏幕
+		int max_pips = std::max(1, (_window_width - hud_pip_x - 8) / (hud_pip_width + hud_pip_gap));
+		if (capacity <= max_pips) {
+			for (int i = 0; i < capacity; ++i) {
+				int x = hud_pip_x + i * (hud_pip_width + hud_pip_gap);
+				setfillcolor(i < filled ? fill_color : rgb(70, 70, 80), _target);
+				bar(x, hud_pip_y, x + hud_pip_width, hud_pip_y + hud_pip_height, _target);
+			}
+		} else {
+			setfillcolor(rgb(70, 70, 80), _target);
+			bar(hud_pip_x, hud_pip_y, hud_pip_x + hud_health_width, hud_pip_y + hud_pip_height, _target);
+			int ammo_width = capacity > 0 ? static_cast<int>(static_cast<float>(hud_health_width) *
+														  static_cast<float>(filled) / static_cast<float>(capacity))
+										  : 0;
+			if (ammo_width > 0) {
+				setfillcolor(fill_color, _target);
+				bar(hud_pip_x, hud_pip_y, hud_pip_x + ammo_width, hud_pip_y + hud_pip_height, _target);
+			}
+			setfont(hud_value_font_height, 0, "Consolas", _target);
+			setbkmode(TRANSPARENT, _target);
+			settextcolor(rgb(230, 240, 250), _target);
+			std::string ammo_text = std::to_string(filled) + "/" + std::to_string(capacity);
+			outtextxy(hud_pip_x + hud_health_width + hud_label_gap, hud_pip_y + 1, ammo_text.c_str(), _target);
 		}
 
-		float ratio = static_cast<float>(player.health()) / static_cast<float>(player.max_health());
+		float ratio = std::clamp(static_cast<float>(player.health()) / static_cast<float>(player.max_health()), 0.0f,
+								 1.0f);
 		setfillcolor(rgb(60, 60, 70), _target);
 		bar(hud_health_x, hud_health_y, hud_health_x + hud_health_width, hud_health_y + hud_health_height, _target);
 		setfillcolor(ratio > 0.5f ? rgb(80, 200, 90) : rgb(230, 60, 60), _target);

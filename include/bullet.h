@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <random>
 #include <vector>
 
@@ -17,7 +18,7 @@ class Bullet : public Spirit {
 		int _explosive;   // 爆裂弹层数
 		int _pierce;      // 剩余可穿透的敌人数
 		std::vector<std::uint64_t> _hit_enemies;
-		std::mt19937 _rng;
+		std::optional<std::mt19937> _rng;  // 只有爆裂弹需要随机数，按需构造
 
 		bool _already_hit(std::uint64_t serial) const;
 		void _explode(Scene &scene, float x, float y, const Enemy *direct);

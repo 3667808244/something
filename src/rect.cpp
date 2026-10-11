@@ -64,6 +64,14 @@ float Rect::segment_aabb_hit_t(float left, float top, float right, float bottom,
 	return t_min;
 }
 
+float Rect::segment_hit_t(float x0, float y0, float x1, float y1) const {
+	return Rect::segment_aabb_hit_t(left(), top(), right(), bottom(), x0, y0, x1, y1);
+}
+
+bool aabb_overlap(float ax, float ay, float ahalf_w, float ahalf_h, float bx, float by, float bhalf_w, float bhalf_h) {
+	return std::abs(ax - bx) < ahalf_w + bhalf_w && std::abs(ay - by) < ahalf_h + bhalf_h;
+}
+
 void Rect::update(float delta [[maybe_unused]], Scene &scene [[maybe_unused]]) {}
 
 bool Rect::is_invalid() const { return false; }

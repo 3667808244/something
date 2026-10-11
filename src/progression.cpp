@@ -71,7 +71,9 @@ void Progression::update(float delta, Scene &scene [[maybe_unused]]) {
 	_level_down_flash = std::max(0.0f, _level_down_flash - delta);
 }
 
-void Progression::draw(PIMAGE image) {
+void Progression::draw(PIMAGE image [[maybe_unused]]) {}
+
+void Progression::draw_overlay(PIMAGE image) {
 	if (_level_up_flash <= 0.0f && _level_down_flash <= 0.0f) {
 		return;
 	}

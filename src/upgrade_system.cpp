@@ -50,8 +50,7 @@ int UpgradeSystem::_stack_count(UpgradeId id) const {
 	return count;
 }
 
-void UpgradeSystem::_open_cards(int level) {
-	UpgradeTier tier = _tier_for_level(level);
+bool UpgradeSystem::_collect_candidates(UpgradeTier tier, std::vector<UpgradeId> &out) const {
 	const std::vector<UpgradeId> &pool = upgrade_pool(tier);
 	const std::deque<UpgradeId> &recent = _recent_picks[static_cast<std::size_t>(tier)];
 
@@ -62,12 +61,12 @@ void UpgradeSystem::_open_cards(int level) {
 		excluded.push_back(recent[recent.size() - 1 - i]);
 	}
 
-	std::vector<UpgradeId> candidates;
-	auto collect = [&](bool ignore_exclusions, bool ignore_caps) {
-		candidates.clear();
+	auto collect = [&](bool ignore_exclusions) {
+		out.clear();
 		for (UpgradeId id : pool) {
+			// 达到上限的升级永不再发，层数不会溢出
 			const UpgradeDef &def = upgrade_def(id);
-			if (!ignore_caps && def.max_stacks > 0 && _stack_count(id) >= def.max_stacks) {
+			if (def.max_stacks > 0 && _stack_count(id) >= def.max_stacks) {
 				continue;
 			}
 			if (!ignore_exclusions) {
@@ -81,16 +80,25 @@ void UpgradeSystem::_open_cards(int level) {
 					continue;
 				}
 			}
-			candidates.push_back(id);
+			out.push_back(id);
 		}
 	};
 
-	collect(false, false);
-	if (candidates.size() < offer_count) {
-		collect(true, false);
+	collect(false);
+	// 池子被排除规则挤到不足三张时放宽排除
+	if (out.size() < offer_count) {
+		collect(true);
 	}
-	if (candidates.size() < offer_count) {
-		collect(true, true);
+	return !out.empty();
+}
+
+void UpgradeSystem::_open_cards(int level) {
+	UpgradeTier tier = _tier_for_level(level);
+	std::vector<UpgradeId> candidates;
+	if (!_collect_candidates(tier, candidates) && tier == UpgradeTier::Advanced) {
+		// 高级升级已全部点满：该等级改发普通卡
+		tier = UpgradeTier::Common;
+		_collect_candidates(tier, candidates);
 	}
 
 	std::shuffle(candidates.begin(), candidates.end(), _rng);
@@ -99,9 +107,21 @@ void UpgradeSystem::_open_cards(int level) {
 		_offered[i] = candidates[i];
 	}
 
+	_offered_tier = tier;
 	_hover = -1;
 	_pending_pick = -1;
 	_choosing = _offered_size > 0;
+}
+
+void UpgradeSystem::_advance_cards() {
+	// 正常情况下开一批卡就停下；若某个等级确实无卡可发（池子被点满），
+	// 丢弃该等级继续处理下一笔，避免 _pending_levels 永远推不动
+	while (!_choosing && !_pending_levels.empty()) {
+		_open_cards(_pending_levels.front());
+		if (!_choosing) {
+			_pending_levels.pop_front();
+		}
+	}
 }
 
 void UpgradeSystem::_pick(std::size_t index, Scene &scene) {
@@ -123,9 +143,7 @@ void UpgradeSystem::_pick(std::size_t index, Scene &scene) {
 	_hover = -1;
 	_pending_pick = -1;
 
-	if (!_pending_levels.empty()) {
-		_open_cards(_pending_levels.front());
-	}
+	_advance_cards();
 }
 
 void UpgradeSystem::_recompute() {
@@ -143,7 +161,8 @@ void UpgradeSystem::_recompute() {
 		}
 	}
 
-	// F3 调试：把当前记录和累计修改器打到控制台，便于验证回滚
+#ifndef NDEBUG
+	// F3 调试：把当前记录和累计修改器打到控制台，便于验证回滚（release 无控制台，直接编译掉）
 	if (_show_history) {
 		std::printf("[upgrade] level=%d history=%zu mods{fire=%d mag=%d hp=%d spd=%d dmg=%d aoe=%d leech=%d "
 					"magnet=%d pierce=%d thorns=%d exp=%d}\n",
@@ -155,6 +174,7 @@ void UpgradeSystem::_recompute() {
 		}
 		std::fflush(stdout);
 	}
+#endif
 }
 
 void UpgradeSystem::_apply(Scene &scene) {
@@ -207,9 +227,7 @@ void UpgradeSystem::update(float delta, Scene &scene) {
 		_apply(scene);
 	}
 
-	if (!_choosing && !_pending_levels.empty()) {
-		_open_cards(_pending_levels.front());
-	}
+	_advance_cards();
 }
 
 void UpgradeSystem::_card_rect(std::size_t index, int &left, int &top, int &width, int &height) const {
@@ -234,8 +252,7 @@ void UpgradeSystem::draw_overlay(PIMAGE image) {
 		roundrect(l0 - card_panel_margin, t0 - card_title_height, l1 + w1 + card_panel_margin,
 				  t0 + h0 + card_panel_margin, 16, image);
 
-		UpgradeTier tier =
-			_pending_levels.empty() ? UpgradeTier::Common : _tier_for_level(_pending_levels.front());
+		UpgradeTier tier = _offered_tier;
 		const wchar_t *title = tier == UpgradeTier::Advanced ? L"高级升级 · 三选一" : L"选择一项升级";
 
 		setfont(19, 0, ui_font, image);

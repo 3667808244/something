@@ -30,6 +30,7 @@ class Enemy : public Actor {
 		Enemy(float x, float y, int window_width, int window_height);
 
 		void take_damage(int amount, Scene &scene);
+		// 预留接口：目前无调用点
 		int health() const;
 		bool is_dead() const;
 		// 唯一序号：子弹穿透时用来记录已经打过的敌人

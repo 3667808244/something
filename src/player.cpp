@@ -231,6 +231,11 @@ void Player::update(float delta, Scene &scene) {
 			_y = _spawn_y;
 			_speed_x = 0.0f;
 			_speed_y = 0.0f;
+			// 重生时清理战斗状态：取消换弹、重置开火与护甲回复计时
+			_reloading = false;
+			_reload_timer = 0.0f;
+			_fire_cooldown = 0.0f;
+			_armor_regen_timer = 0.0f;
 			// 死亡惩罚：掉一级经验等级
 			scene.each<Progression>([&](Progression &progression) { progression.lose_level(); });
 		}

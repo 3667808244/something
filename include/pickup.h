@@ -21,8 +21,12 @@ class Pickup : public Actor {
 	public:
 		Pickup(float x, float y, float width, float height, int value, int window_width, int window_height);
 
+		// 预留接口：目前无调用点
 		int value() const;
 		bool is_collected() const;
+
+		// 掉落物不参与 Actor 之间的接触限速
+		bool is_solid() const override;
 
 		void update(float delta, Scene &scene) override;
 		bool is_invalid() const override;

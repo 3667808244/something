@@ -18,8 +18,7 @@ constexpr float explosive_radius = 30.0f;
 constexpr float explosive_chance_per_stack = 0.15f;
 
 Bullet::Bullet(float x, float y, float dir_x, float dir_y, float speed, int damage, int explosive, int pierce,
-			   int window_width, int window_height)
-	: _rng(make_random_seed(static_cast<std::uint64_t>(static_cast<unsigned>(x)))) {
+			   int window_width, int window_height) {
 	_window_width = window_width;
 	_window_height = window_height;
 	_x = x;
@@ -30,6 +29,10 @@ Bullet::Bullet(float x, float y, float dir_x, float dir_y, float speed, int dama
 	_damage = damage;
 	_explosive = explosive;
 	_pierce = pierce;
+	if (_explosive > 0) {
+		// 普通子弹不需要随机数：只在真的可能爆炸时才播种，省掉每发的 mt19937 构造开销
+		_rng.emplace(make_random_seed(static_cast<std::uint64_t>(static_cast<unsigned>(x))));
+	}
 }
 
 bool Bullet::_already_hit(std::uint64_t serial) const {
@@ -47,7 +50,7 @@ void Bullet::_explode(Scene &scene, float x, float y, const Enemy *direct) {
 	}
 
 	std::uniform_real_distribution<float> roll(0.0f, 1.0f);
-	if (roll(_rng) >= explosive_chance_per_stack * static_cast<float>(_explosive)) {
+	if (roll(*_rng) >= explosive_chance_per_stack * static_cast<float>(_explosive)) {
 		return;
 	}
 
