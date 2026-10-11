@@ -1,0 +1,25 @@
+// 关卡 2「竞技场」：中央立柱 + 横向掩体，两侧阶梯平台逐级上高台
+// 注意：单次跳跃最多上升约 96px（玩家中心），相邻落脚点落差都控制在 80px 以内
+{"type":"player","x":320,"y":420}
+
+{"type":"obstacle","x":320,"y":474,"width":640,"height":12}
+{"type":"obstacle","x":24,"y":260,"width":40,"height":420}
+{"type":"obstacle","x":616,"y":260,"width":40,"height":420}
+{"type":"obstacle","x":320,"y":270,"width":160,"height":24}
+{"type":"obstacle","x":320,"y":180,"width":24,"height":156}
+
+{"type":"platform","x":130,"y":396,"width":140,"height":12}
+{"type":"platform","x":240,"y":320,"width":160,"height":12}
+{"type":"platform","x":130,"y":244,"width":140,"height":12}
+{"type":"platform","x":230,"y":168,"width":140,"height":12}
+
+{"type":"platform","x":510,"y":396,"width":140,"height":12}
+{"type":"platform","x":400,"y":320,"width":160,"height":12}
+{"type":"platform","x":510,"y":244,"width":140,"height":12}
+{"type":"platform","x":410,"y":168,"width":140,"height":12}
+
+{"type":"spawn","x":60,"y":80}
+{"type":"spawn","x":580,"y":80}
+{"type":"spawn","x":320,"y":70}
+{"type":"spawn","x":80,"y":350}
+{"type":"spawn","x":560,"y":350}

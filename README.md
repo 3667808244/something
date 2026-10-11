@@ -106,6 +106,10 @@ ezmk project cc               # 生成 compile_commands.json 供 clangd 使用
 - 注释：`//` 与同一行内的 `/* */`（nlohmann/json 的非标扩展；整行注释也可以）。
 - 位置：exe 所在目录、当前目录及各自的 `assets/` 子目录都会被扫描；`argv[1]` 指定文件时
   开始界面默认选中它。地图列表见 `include/level_catalog.h`。
+- 仓库自带三张示例地图：`assets/level1.jsonl`（默认地形）、`assets/level2.jsonl`「竞技场」
+  （中央立柱 + 横向掩体，两侧阶梯平台逐级上高台）、`assets/level3.jsonl`「攀爬」（阶梯平台）。
+- 设计地图时注意：**单次跳跃最多上升约 96px**（玩家中心），相邻落脚点的落差要控制在 80px 以内，
+  否则会出现跳不上去的死平台。`include/player.h` 的 `jump_speed` / 场景重力决定这个上限。
 - 一个关卡文件都没有时，菜单里只剩「内置地图」（`builtin_level()`）。
 - 选中的文件解析/字段校验失败时，错误 `文件:行号: 原因` 显示在开始界面底部，留在菜单里。
 - 窗口尺寸仍由 `src/main.cpp` 的 `window_width` / `window_height` 决定。
