@@ -53,6 +53,8 @@ constexpr float magnet_bonus_per_stack = 0.40f;
 constexpr float experience_bonus_per_stack = 0.25f;
 constexpr float thorns_chance_per_stack = 0.20f;
 constexpr int lifesteal_per_stack = 3;
+// 击杀精英怪时，在普通汲取回血之外额外回复
+constexpr int elite_lifesteal_bonus = 9;
 
 // 霰弹：一次消耗多枚弹药，弹丸数 = 消耗 * 1.1（小数按概率补 1），并固定降速
 constexpr float shotgun_ammo_factor = 1.1f;
@@ -139,11 +141,12 @@ void Player::apply_modifiers(const UpgradeModifiers &mods) {
 	_armor = std::min(_armor, static_cast<float>(_armor_max));
 }
 
-void Player::on_enemy_killed() {
+void Player::on_enemy_killed(bool elite) {
 	if (_lifesteal_per_kill <= 0) {
 		return;
 	}
-	_health = std::min(_max_health, _health + _lifesteal_per_kill);
+	const int heal = _lifesteal_per_kill + (elite ? elite_lifesteal_bonus : 0);
+	_health = std::min(_max_health, _health + heal);
 }
 
 void Player::draw(PIMAGE image) {

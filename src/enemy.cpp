@@ -20,13 +20,12 @@ constexpr float enemy_wander_width_per_y = 1.0f / 3.0f;	 // |dy| 每 1px 增加�
 constexpr float enemy_wander_width_max = 120.0f;		 // 游荡总宽度上限
 constexpr float enemy_wander_speed = 55.0f;
 constexpr float enemy_wander_arrive = 4.0f;
-constexpr int enemy_max_health = 3;
 constexpr float enemy_flash_duration = 0.12f;
 constexpr int enemy_bar_width = 24;
+constexpr int enemy_elite_bar_width = 36;  // 精英血条更长，一眼能分辨
 constexpr int enemy_bar_height = 3;
 constexpr int enemy_bar_offset_y = 6;
 constexpr float enemy_health_bar_range = 160.0f;
-constexpr int enemy_exp_value = 5;
 constexpr unsigned enemy_seed_salt = 2654435761u;
 
 namespace {
@@ -36,11 +35,14 @@ std::uint64_t next_enemy_serial = 1;
 
 }  // namespace
 
-Enemy::Enemy(float x, float y, int window_width, int window_height)
+Enemy::Enemy(float x, float y, int window_width, int window_height, const EnemyStats &stats)
 	: Actor(x, y, enemy_size, enemy_size, window_width, window_height),
 	  // 混入出生 x，避免同一批创建的敌人因为时钟分辨率相同而拿到同一颗种子
 	  _rng(make_random_seed(static_cast<std::uint64_t>(static_cast<unsigned>(x)) * enemy_seed_salt)) {
-	_health = enemy_max_health;
+	_max_health = std::max(1, stats.max_health);
+	_health = _max_health;
+	_exp_value = std::max(0, stats.exp_value);
+	_elite = stats.elite;
 	_dead = false;
 	_flash_timer = 0.0f;
 	_player_nearby = false;
@@ -74,14 +76,16 @@ void Enemy::_on_death(Scene &scene) {
 		return;
 	}
 	_death_handled = true;
-	scene.add_spirit<ExperienceOrb>(_x, _y, enemy_exp_value, _window_width, _window_height);
-	// 击杀通知：玩家侧的汲取在这里结算
-	scene.each<Player>([&](Player &player) { player.on_enemy_killed(); });
+	scene.add_spirit<ExperienceOrb>(_x, _y, _exp_value, _window_width, _window_height);
+	// 击杀通知：玩家侧的汲取在这里结算（精英怪回得更多）
+	scene.each<Player>([&](Player &player) { player.on_enemy_killed(_elite); });
 }
 
 int Enemy::health() const { return _health; }
 
 bool Enemy::is_dead() const { return _dead; }
+
+bool Enemy::is_elite() const { return _elite; }
 
 std::uint64_t Enemy::serial() const { return _serial; }
 
@@ -104,24 +108,27 @@ float Enemy::_pick_wander_target(float avoid_direction) {
 }
 
 void Enemy::draw(PIMAGE image) {
-	setfillcolor(_flash_timer > 0.0f ? rgb(255, 255, 255) : rgb(180, 80, 220), image);
+	// 精英：橙红色身体；普通：紫色
+	const color_t body = _elite ? rgb(235, 110, 60) : rgb(180, 80, 220);
+	setfillcolor(_flash_timer > 0.0f ? rgb(255, 255, 255) : body, image);
 	bar(static_cast<int>(left()), static_cast<int>(top()), static_cast<int>(right()), static_cast<int>(bottom()),
 		image);
 
 	// 非满血 或 玩家在范围内，二者满足其一就画（并集）
-	if (!_player_nearby && _health >= enemy_max_health) {
+	if (!_player_nearby && _health >= _max_health) {
 		return;
 	}
 
-	// 头顶血条：底色 + 按当前血量填充
-	int bar_left = static_cast<int>(center_x()) - enemy_bar_width / 2;
+	// 头顶血条：底色 + 按当前血量填充；精英血条更长、填充色也不同
+	const int bar_width = _elite ? enemy_elite_bar_width : enemy_bar_width;
+	int bar_left = static_cast<int>(center_x()) - bar_width / 2;
 	int bar_top = static_cast<int>(top()) - enemy_bar_offset_y;
 	setfillcolor(rgb(40, 40, 48), image);
-	bar(bar_left, bar_top, bar_left + enemy_bar_width, bar_top + enemy_bar_height, image);
+	bar(bar_left, bar_top, bar_left + bar_width, bar_top + enemy_bar_height, image);
 
-	int filled = enemy_bar_width * _health / enemy_max_health;
+	int filled = bar_width * _health / _max_health;
 	if (filled > 0) {
-		setfillcolor(rgb(90, 210, 90), image);
+		setfillcolor(_elite ? rgb(255, 170, 60) : rgb(90, 210, 90), image);
 		bar(bar_left, bar_top, bar_left + filled, bar_top + enemy_bar_height, image);
 	}
 }

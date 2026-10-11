@@ -22,6 +22,14 @@ struct SpawnerConfig {
 	float spawn_size = 20.0f;             // 生成敌人的碰撞盒边长，与 Enemy 一致
 	bool visible = true;                  // F1 切换刷怪点显隐
 	bool debug_info = false;              // F2 切换编号/坐标/冷却
+
+	// 高级敌人（精英）：等级达标后逐只掷概率，血量和经验按倍数放大
+	int elite_min_level = 5;              // 从第几级开始可能出现精英
+	float elite_base_chance = 0.15f;      // 刚达阈值时的概率
+	float elite_chance_per_level = 0.02f; // 每超过阈值 1 级再加多少
+	float elite_chance_max = 0.50f;       // 概率上限
+	int elite_health_multiplier = 5;      // 血量倍数（3 -> 15）
+	int elite_exp_multiplier = 6;         // 经验倍数（5 -> 30）
 };
 
 class Spawner : public Spirit {
@@ -39,6 +47,7 @@ class Spawner : public Spirit {
 		int _window_width, _window_height;
 		std::mt19937 _rng;
 		std::size_t _spawned_total;
+		int _player_level = 1;  // 最近一次 update 读到的玩家等级（F2 显示用）
 		bool _f1_held = false;
 		bool _f2_held = false;
 
@@ -46,6 +55,10 @@ class Spawner : public Spirit {
 		bool _is_valid_spawn(float x, float y, Scene &scene);
 		// 统计某个点附近已有多少敌人，用来优先选空旷的点
 		float _crowding(float x, float y, const std::vector<std::pair<float, float>> &enemies) const;
+		// 当前等级下生成精英的概率（等级不够返回 0）
+		float _elite_chance(int level) const;
+		// 按概率决定这一只是不是精英
+		bool _roll_elite(int level);
 
 	public:
 		Spawner(std::vector<SpawnPointDef> points, int window_width, int window_height,

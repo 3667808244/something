@@ -73,8 +73,8 @@ class Player : public Actor {
 
 		// 按升级层数重算全部数值（当前血量按同一比例回复，向上取整）
 		void apply_modifiers(const UpgradeModifiers &mods);
-		// 击杀回调：汲取在这里结算
-		void on_enemy_killed();
+		// 击杀回调：汲取在这里结算；精英怪额外多回一点
+		void on_enemy_killed(bool elite);
 
 		void draw(PIMAGE image) override;
 		void update(float delta, Scene &scene) override;

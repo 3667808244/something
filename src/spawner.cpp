@@ -10,6 +10,7 @@
 #include "obstacle.h"
 #include "platform.h"
 #include "player.h"
+#include "progression.h"
 #include "random_seed.h"
 #include "scene.h"
 #include "spawn_effect.h"
@@ -44,6 +45,19 @@ Spawner::Spawner(std::vector<SpawnPointDef> points, int window_width, int window
 		node.blocked = false;
 		_nodes.push_back(node);
 	}
+}
+
+float Spawner::_elite_chance(int level) const {
+	if (level < _config.elite_min_level) {
+		return 0.0f;
+	}
+	const float growth = static_cast<float>(level - _config.elite_min_level) * _config.elite_chance_per_level;
+	return std::clamp(_config.elite_base_chance + growth, 0.0f, _config.elite_chance_max);
+}
+
+bool Spawner::_roll_elite(int level) {
+	std::uniform_real_distribution<float> roll(0.0f, 1.0f);
+	return roll(_rng) < _elite_chance(level);
 }
 
 bool Spawner::_is_valid_spawn(float x, float y, Scene &scene) {
@@ -98,6 +112,10 @@ void Spawner::update(float delta, Scene &scene) {
 	std::vector<std::pair<float, float>> enemies;
 	scene.each<Enemy>([&](Enemy &enemy) { enemies.emplace_back(enemy.center_x(), enemy.center_y()); });
 
+	int player_level = 1;
+	scene.each<Progression>([&](Progression &progression) { player_level = progression.level(); });
+	_player_level = player_level;
+
 	// 每帧都重新校验：冷却期和满员时也保持红/绿是当前帧的真实结果，不会停在旧值
 	for (auto &node : _nodes) {
 		node.blocked = !_is_valid_spawn(node.x, node.y, scene);
@@ -132,7 +150,13 @@ void Spawner::update(float delta, Scene &scene) {
 	int remaining = _config.max_alive - static_cast<int>(enemies.size());
 	int count = std::min(_config.batch, remaining);
 	for (int i = 0; i < count; ++i) {
-		scene.add_spirit<Enemy>(best->x, best->y, _window_width, _window_height);
+		EnemyStats stats;
+		if (_roll_elite(player_level)) {
+			stats.elite = true;
+			stats.max_health = enemy_base_health * _config.elite_health_multiplier;
+			stats.exp_value = enemy_base_exp_value * _config.elite_exp_multiplier;
+		}
+		scene.add_spirit<Enemy>(best->x, best->y, _window_width, _window_height, stats);
 		scene.add_spirit<SpawnEffect>(best->x, best->y);
 		++best->spawned;
 		++_spawned_total;
@@ -209,6 +233,12 @@ void Spawner::draw(PIMAGE image) {
 	setfont(12, 0, "Consolas", image);
 	setbkmode(TRANSPARENT, image);
 	setlinecolor(rgb(230, 240, 255), image);
+	{
+		const int percent = static_cast<int>(_elite_chance(_player_level) * 100.0f + 0.5f);
+		const std::string elite_label =
+			"Lv " + std::to_string(_player_level) + "  elite " + std::to_string(percent) + "%";
+		ege_outtextxy(12.0f, 4.0f, elite_label.c_str(), image);
+	}
 	for (std::size_t i = 0; i < _nodes.size(); ++i) {
 		const Node &node = _nodes[i];
 		std::string cd = std::to_string(node.cooldown).substr(0, 4);
