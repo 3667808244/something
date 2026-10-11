@@ -51,8 +51,6 @@ class UpgradeSystem : public Spirit {
 		void _apply(Scene &scene);
 		void _card_rect(std::size_t index, int &left, int &top, int &width, int &height) const;
 		void _draw_history(PIMAGE image);
-		// 选卡时自己画一个光标箭头：EGE 隐藏的系统光标在窗口非前台时恢复不了
-		void _draw_cursor(PIMAGE image);
 
 	public:
 		UpgradeSystem(int window_width, int window_height);

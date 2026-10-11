@@ -11,6 +11,7 @@
 #include "progression.h"
 #include "random_seed.h"
 #include "scene.h"
+#include "ui.h"
 
 namespace {
 
@@ -272,36 +273,11 @@ void UpgradeSystem::draw_overlay(PIMAGE image) {
 	}
 
 	if (_choosing) {
-		_draw_cursor(image);
+		ui_draw_cursor(image);
 	}
 
 	if (_show_history) {
 		_draw_history(image);
-	}
-}
-
-void UpgradeSystem::_draw_cursor(PIMAGE image) {
-	int mouse_x = 0;
-	int mouse_y = 0;
-	mousepos(&mouse_x, &mouse_y);
-
-	static const int arrow[7][2] = {
-		{ 0, 0 }, { 0, 17 }, { 4, 13 }, { 8, 21 }, { 11, 19 }, { 7, 11 }, { 12, 11 },
-	};
-
-	ege_point points[7];
-	for (int i = 0; i < 7; ++i) {
-		points[i].x = static_cast<float>(mouse_x + arrow[i][0]);
-		points[i].y = static_cast<float>(mouse_y + arrow[i][1]);
-	}
-
-	setfillcolor(rgb(255, 255, 255), image);
-	ege_fillpoly(7, points, image);
-
-	setlinecolor(rgb(20, 22, 28), image);
-	for (int i = 0; i < 7; ++i) {
-		int j = (i + 1) % 7;
-		line(mouse_x + arrow[i][0], mouse_y + arrow[i][1], mouse_x + arrow[j][0], mouse_y + arrow[j][1], image);
 	}
 }
 

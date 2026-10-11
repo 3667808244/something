@@ -29,3 +29,6 @@ struct LevelData {
 // 只把静态几何（障碍物 + 单向平台）加进场景。玩家与刷怪点由调用方按顺序添加：
 // Spawner 插在几何之后、玩家之前，刷怪点标记就会画在几何之上、实体之下。
 void build_level(Scene &scene, const LevelData &level);
+
+// 内置兜底地图：一个关卡文件都没有（或选了「内置地图」）时使用，保证一定能启动
+LevelData builtin_level();

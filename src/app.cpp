@@ -9,8 +9,10 @@
 
 #include "define.h"
 #include "ege/graphics.h"
+#include "level_loader.h"
 #include "player.h"
 #include "progression.h"
+#include "spawner.h"
 #include "upgrade_system.h"
 
 constexpr int crosshair_arm = 8;
@@ -42,7 +44,8 @@ constexpr float max_frame_time = 0.25f;
 // 固定物理步长：900px/s 的落速下一步只走 7.5px，不会穿过 12~20px 的薄平台
 constexpr float physics_step = 1.0f / 120.0f;
 
-App::App(int window_width, int window_height, const std::optional<std::string> &title) {
+App::App(int window_width, int window_height, const std::optional<std::string> &title)
+	: _start_screen(window_width, window_height), _pause_menu(window_width, window_height) {
 	_target = nullptr;
 	_window_width = window_width;
 	_window_height = window_height;
@@ -61,53 +64,146 @@ App::~App() {
 	closegraph();
 }
 
+void App::set_level_options(std::vector<LevelOption> options, std::size_t default_index) {
+	_level_options = std::move(options);
+	if (_level_options.empty()) {
+		_level_options.push_back({ std::string(), L"内置地图" });
+	}
+	_start_screen.set_levels(_level_options, default_index);
+}
+
+bool App::_start_level(const LevelOption &option) {
+	LevelData data;
+	if (option.path.empty()) {
+		data = builtin_level();
+	} else {
+		LevelLoadError error;
+		if (!load_level_from_file(option.path, data, error)) {
+			if (error.line > 0) {
+				_start_screen.set_error(option.path + ":" + std::to_string(error.line) + ": " + error.message);
+			} else {
+				_start_screen.set_error(option.path + ": " + error.message);
+			}
+			return false;
+		}
+	}
+
+	_current_level = option;
+	_level_data = data;
+	_rebuild_scene();
+	_start_screen.set_error(std::string());
+	_pause_menu.close();
+	_state = State::Playing;
+	return true;
+}
+
+void App::_rebuild_scene() {
+	_root_scene.clear();
+	_root_scene.purge();
+
+	// 绘制顺序 = 插入顺序：几何 -> 刷怪点 -> 玩家。
+	// 刷怪点标记因此落在几何之上、玩家和敌人之下，不会挡住实体。
+	build_level(_root_scene, _level_data);
+	_root_scene.add_spirit<Spawner>(_level_data.spawn_points, _window_width, _window_height, SpawnerConfig{});
+	_root_scene.add_spirit<Player>(_window_width, _window_height, _level_data.player_x, _level_data.player_y);
+	// 经验/等级系统；放在玩家之后，升级提示文字盖在其它实体之上
+	_root_scene.add_spirit<Progression>(_window_width);
+	// 升级卡系统：跟随等级发卡；覆盖层由 App 在 HUD 之后绘制
+	_root_scene.add_spirit<UpgradeSystem>(_window_width, _window_height);
+
+	// 立刻把 _pending 里的实体挪进 _spirits，保证进入游戏的第一帧就能画出来
+	_root_scene.purge();
+}
+
+void App::_return_to_start_screen() {
+	_root_scene.clear();
+	_root_scene.purge();
+	_pause_menu.close();
+	_start_screen.set_error(std::string());
+	_state = State::StartScreen;
+}
+
 void App::run() {
 	_frame_timer.reset();
 	float accumulator = 0.0f;
 	while (is_run() && !_root_scene.is_invalid()) {
-		// 每帧都取一次时间：选卡暂停时也刷新计时基准，恢复后不会把整段选卡时间一次性补成物理步
-		float frame_time = _frame_timer.tick();
-		bool choosing = _is_choosing();
+		// 每帧都取一次时间：暂停/选卡/开始界面时也刷新计时基准，恢复后不会一次性补帧
+		const float frame_time = _frame_timer.tick();
 
 		while (kbmsg()) {
 			key_msg msg = getkey();
-			if (choosing) {
-				// 选卡期间"按下"只给升级系统，避免顺手开枪/跳跃；
-				// 但"抬起"必须继续广播，否则选卡时松开 A/D 清不掉 _move_flags
-				if (msg.msg == ege::key_msg_up) {
-					_handle_keyboard(msg);
-				} else {
-					_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.handle_keyboard(msg); });
-				}
+			if (_state == State::StartScreen) {
+				_start_screen.handle_keyboard(msg);
+			} else if (msg.msg == ege::key_msg_up) {
+				// 抬起始终广播：暂停/选卡时松开 A/D 也要能清掉 _move_flags
+				_handle_keyboard(msg);
+				_pause_menu.handle_keyboard(msg);
+			} else if (_is_choosing()) {
+				// 选卡优先：此时 Esc 不开暂停，必须先选卡
+				_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.handle_keyboard(msg); });
+			} else if (_pause_menu.is_open()) {
+				_pause_menu.handle_keyboard(msg);
+			} else if (msg.key == key_esc) {
+				_pause_menu.open();
 			} else {
 				_handle_keyboard(msg);
 			}
 		}
 		while (mousemsg()) {
 			mouse_msg msg = getmouse();
-			if (choosing) {
-				// 只把"移动/按下"给升级系统；"抬起"广播出去清掉 _firing
-				if (msg.is_up()) {
-					_handle_mouse(msg);
-				} else {
-					_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.handle_mouse(msg); });
-				}
+			if (_state == State::StartScreen) {
+				_start_screen.handle_mouse(msg);
+			} else if (msg.is_up()) {
+				// 同理：抬起广播出去清掉 _firing，同时让菜单刷新悬停
+				_handle_mouse(msg);
+				_pause_menu.handle_mouse(msg);
+			} else if (_is_choosing()) {
+				_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.handle_mouse(msg); });
+			} else if (_pause_menu.is_open()) {
+				_pause_menu.handle_mouse(msg);
 			} else {
 				_handle_mouse(msg);
 			}
 		}
 
-		if (choosing) {
+		if (_state == State::StartScreen) {
+			const StartAction action = _start_screen.take_action();
+			if (action == StartAction::StartGame) {
+				_start_level(_start_screen.selected_level());
+			} else if (action == StartAction::Quit) {
+				_root_scene.finish();
+			}
+		} else if (_pause_menu.is_open()) {
+			const PauseAction action = _pause_menu.take_action();
+			if (action == PauseAction::Resume) {
+				_pause_menu.close();
+			} else if (action == PauseAction::Restart) {
+				accumulator = 0.0f;
+				if (!_start_level(_current_level)) {
+					// 重开失败（例如地图文件被删/改坏）：回开始界面，让错误显示出来
+					_return_to_start_screen();
+				}
+			} else if (action == PauseAction::BackToStart) {
+				accumulator = 0.0f;
+				_return_to_start_screen();
+			} else if (action == PauseAction::Quit) {
+				_root_scene.finish();
+			}
+		}
+
+		if (_world_paused()) {
 			// 暂停物理；升级系统仍然要处理已经排队的选卡
 			accumulator = 0.0f;
-			_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.modal_update(_root_scene); });
+			if (_is_choosing()) {
+				_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.modal_update(_root_scene); });
+			}
 		} else {
 			accumulator += std::min(frame_time, max_frame_time);
 			while (accumulator >= physics_step && !_root_scene.is_invalid()) {
 				_update(physics_step);
 				accumulator -= physics_step;
-				if (_is_choosing()) {
-					// 这一帧中途弹卡了，剩下的时间不再推进
+				if (_world_paused()) {
+					// 这一帧中途弹卡/暂停了，剩下的时间不再推进
 					accumulator = 0.0f;
 					break;
 				}
@@ -123,15 +219,24 @@ void App::run() {
 void App::_update(float delta) { _root_scene.update(delta, _root_scene); }
 
 void App::_draw() {
+	if (_state == State::StartScreen) {
+		_start_screen.draw(_target);
+		return;
+	}
+
 	_root_scene.draw(_target);
 	// 等级提示画在所有实体之上：动态生成的敌人/子弹是追加进场景的，会盖住普通绘制层
 	_root_scene.each<Progression>([&](Progression &progression) { progression.draw_overlay(_target); });
 	_draw_hud();
-	if (!_is_choosing()) {
+	if (!_is_choosing() && !_pause_menu.is_open()) {
 		_draw_crosshair();
 	}
-	// 升级卡覆盖层最后画，保证压在最上面
+	// 升级卡覆盖层
 	_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { system.draw_overlay(_target); });
+	// 暂停菜单压在最上面
+	if (_pause_menu.is_open()) {
+		_pause_menu.draw(_target);
+	}
 }
 
 void App::_draw_hud() {
@@ -157,8 +262,8 @@ void App::_draw_hud() {
 			setfillcolor(rgb(70, 70, 80), _target);
 			bar(hud_pip_x, hud_pip_y, hud_pip_x + hud_health_width, hud_pip_y + hud_pip_height, _target);
 			int ammo_width = capacity > 0 ? static_cast<int>(static_cast<float>(hud_health_width) *
-														  static_cast<float>(filled) / static_cast<float>(capacity))
-										  : 0;
+																																										static_cast<float>(filled) / static_cast<float>(capacity))
+																												 : 0;
 			if (ammo_width > 0) {
 				setfillcolor(fill_color, _target);
 				bar(hud_pip_x, hud_pip_y, hud_pip_x + ammo_width, hud_pip_y + hud_pip_height, _target);
@@ -171,12 +276,12 @@ void App::_draw_hud() {
 		}
 
 		float ratio = std::clamp(static_cast<float>(player.health()) / static_cast<float>(player.max_health()), 0.0f,
-								 1.0f);
+															1.0f);
 		setfillcolor(rgb(60, 60, 70), _target);
 		bar(hud_health_x, hud_health_y, hud_health_x + hud_health_width, hud_health_y + hud_health_height, _target);
 		setfillcolor(ratio > 0.5f ? rgb(80, 200, 90) : rgb(230, 60, 60), _target);
 		bar(hud_health_x, hud_health_y, hud_health_x + static_cast<int>(hud_health_width * ratio),
-			hud_health_y + hud_health_height, _target);
+				hud_health_y + hud_health_height, _target);
 
 		// 血条右侧的数字
 		setfont(hud_value_font_height, 0, "Consolas", _target);
@@ -248,6 +353,8 @@ bool App::_is_choosing() {
 	});
 	return choosing;
 }
+
+bool App::_world_paused() { return _state != State::Playing || _pause_menu.is_open() || _is_choosing(); }
 
 SpiritId App::add_spirit(std::unique_ptr<Spirit> spirit) { return _root_scene.add_spirit(std::move(spirit)); }
 
