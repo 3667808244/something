@@ -25,6 +25,7 @@ class Player : public Actor {
 		int _health;
 		float _invulnerable_timer;
 		float _spawn_x, _spawn_y;
+		float _pickup_radius;
 		std::mt19937 _rng;
 
 		void _fire(Scene &scene);
@@ -42,6 +43,7 @@ class Player : public Actor {
 		int health() const;
 		int max_health() const;
 		bool is_invulnerable() const;
+		float pickup_radius() const;
 
 		void draw(PIMAGE image) override;
 		void update(float delta, Scene &scene) override;

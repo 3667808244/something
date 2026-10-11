@@ -80,7 +80,7 @@ void Bullet::update(float delta, Scene &scene) {
 		hit_t = obstacle_t;
 	} else if (enemy_t >= 0.0f) {
 		hit_t = enemy_t;
-		enemy_hit->take_damage(bullet_damage);
+		enemy_hit->take_damage(bullet_damage, scene);
 	}
 
 	if (hit_t >= 0.0f) {

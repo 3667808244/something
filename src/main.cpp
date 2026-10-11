@@ -1,6 +1,7 @@
 #include "app.h"
 #include "level.h"
 #include "player.h"
+#include "progression.h"
 #include "spawner.h"
 
 namespace {
@@ -46,6 +47,8 @@ int main() {
 	build_level(app.root_scene(), level);
 	app.add_spirit<Spawner>(level.spawn_points, window_width, window_height, SpawnerConfig{});
 	app.add_spirit<Player>(window_width, window_height, level.player_x, level.player_y);
+	// 经验/等级系统；放在最后，升级提示文字盖在其它实体之上
+	app.add_spirit<Progression>(window_width);
 	app.run();
 	return 0;
 }

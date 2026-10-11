@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include "define.h"
+#include "experience_orb.h"
 #include "player.h"
 #include "random_seed.h"
 #include "scene.h"
@@ -25,6 +26,7 @@ constexpr int enemy_bar_width = 24;
 constexpr int enemy_bar_height = 3;
 constexpr int enemy_bar_offset_y = 6;
 constexpr float enemy_health_bar_range = 160.0f;
+constexpr int enemy_exp_value = 5;
 constexpr unsigned enemy_seed_salt = 2654435761u;
 
 Enemy::Enemy(float x, float y, int window_width, int window_height)
@@ -40,9 +42,10 @@ Enemy::Enemy(float x, float y, int window_width, int window_height)
 	_wander_center_x = x;
 	_wander_radius = enemy_wander_width_base / 2.0f;
 	_wander_target_x = x;
+	_loot_dropped = false;
 }
 
-void Enemy::take_damage(int amount) {
+void Enemy::take_damage(int amount, Scene &scene) {
 	if (_dead) {
 		return;
 	}
@@ -53,7 +56,17 @@ void Enemy::take_damage(int amount) {
 	if (_health <= 0) {
 		_health = 0;
 		_dead = true;
+		// 敌人 _dead 之后 Scene 不会再调用它的 update，掉落必须在这里生成
+		_drop_loot(scene);
 	}
+}
+
+void Enemy::_drop_loot(Scene &scene) {
+	if (_loot_dropped) {
+		return;
+	}
+	_loot_dropped = true;
+	scene.add_spirit<ExperienceOrb>(_x, _y, enemy_exp_value, _window_width, _window_height);
 }
 
 int Enemy::health() const { return _health; }

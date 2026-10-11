@@ -7,6 +7,7 @@
 #include "define.h"
 #include "ege/graphics.h"
 #include "enemy.h"
+#include "progression.h"
 #include "random_seed.h"
 #include "scene.h"
 
@@ -27,6 +28,7 @@ constexpr float spread_smooth_rate = 6.0f;
 constexpr int player_max_health = 100;
 constexpr int contact_damage = 20;
 constexpr float invulnerable_duration = 1.0f;
+constexpr float player_pickup_radius = 26.0f;
 
 Player::Player(int window_width, int window_height, float spawn_x, float spawn_y)
 	: Actor(spawn_x, spawn_y, player_size, player_size, window_width, window_height), _rng(make_random_seed()) {
@@ -45,6 +47,7 @@ Player::Player(int window_width, int window_height, float spawn_x, float spawn_y
 	_invulnerable_timer = 0.0f;
 	_spawn_x = spawn_x;
 	_spawn_y = spawn_y;
+	_pickup_radius = player_pickup_radius;
 }
 
 void Player::draw(PIMAGE image) {
@@ -105,6 +108,8 @@ void Player::update(float delta, Scene &scene) {
 			_y = _spawn_y;
 			_speed_x = 0.0f;
 			_speed_y = 0.0f;
+			// 死亡惩罚：掉一级经验等级
+			scene.each<Progression>([&](Progression &progression) { progression.lose_level(); });
 		}
 	});
 
@@ -233,3 +238,5 @@ int Player::health() const { return _health; }
 int Player::max_health() const { return player_max_health; }
 
 bool Player::is_invulnerable() const { return _invulnerable_timer > 0.0f; }
+
+float Player::pickup_radius() const { return _pickup_radius; }

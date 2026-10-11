@@ -112,6 +112,30 @@
       "-g",
       "-O0",
       "-IE:\\cpp\\projects\\ege-projects\\something\\include",
+      "src/experience_orb.cpp",
+      "-o",
+      "build/src/experience_orb.o"
+    ],
+    "directory": "E:\\cpp\\projects\\ege-projects\\something",
+    "file": "src/experience_orb.cpp"
+  },
+  {
+    "arguments": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "-DEZMK=1",
+      "-DEZMK_VERSION=\"1.4.9\"",
+      "-DEZMK_PROJECT_NAME=\"something\"",
+      "-DEZMK_PROJECT_VERSION=\"0.1.0\"",
+      "-DEZMK_PROJECT_TYPE=\"executable\"",
+      "-DEZMK_LANG=\"CPP17\"",
+      "-DEZMK_STDLIB=\"libstdcxx\"",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O0",
+      "-IE:\\cpp\\projects\\ege-projects\\something\\include",
       "src/frame_timer.cpp",
       "-o",
       "build/src/frame_timer.o"
@@ -232,6 +256,30 @@
       "-g",
       "-O0",
       "-IE:\\cpp\\projects\\ege-projects\\something\\include",
+      "src/pickup.cpp",
+      "-o",
+      "build/src/pickup.o"
+    ],
+    "directory": "E:\\cpp\\projects\\ege-projects\\something",
+    "file": "src/pickup.cpp"
+  },
+  {
+    "arguments": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "-DEZMK=1",
+      "-DEZMK_VERSION=\"1.4.9\"",
+      "-DEZMK_PROJECT_NAME=\"something\"",
+      "-DEZMK_PROJECT_VERSION=\"0.1.0\"",
+      "-DEZMK_PROJECT_TYPE=\"executable\"",
+      "-DEZMK_LANG=\"CPP17\"",
+      "-DEZMK_STDLIB=\"libstdcxx\"",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O0",
+      "-IE:\\cpp\\projects\\ege-projects\\something\\include",
       "src/platform.cpp",
       "-o",
       "build/src/platform.o"
@@ -262,6 +310,30 @@
     ],
     "directory": "E:\\cpp\\projects\\ege-projects\\something",
     "file": "src/player.cpp"
+  },
+  {
+    "arguments": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "-DEZMK=1",
+      "-DEZMK_VERSION=\"1.4.9\"",
+      "-DEZMK_PROJECT_NAME=\"something\"",
+      "-DEZMK_PROJECT_VERSION=\"0.1.0\"",
+      "-DEZMK_PROJECT_TYPE=\"executable\"",
+      "-DEZMK_LANG=\"CPP17\"",
+      "-DEZMK_STDLIB=\"libstdcxx\"",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O0",
+      "-IE:\\cpp\\projects\\ege-projects\\something\\include",
+      "src/progression.cpp",
+      "-o",
+      "build/src/progression.o"
+    ],
+    "directory": "E:\\cpp\\projects\\ege-projects\\something",
+    "file": "src/progression.cpp"
   },
   {
     "arguments": [

@@ -22,6 +22,19 @@
   校验不过的点显示为**红色**。
 - 场上敌人数量上限由 `SpawnerConfig::max_alive` 控制，参数都在 `include/spawner.h`。
 
+## 掉落与经验
+
+- 敌人死亡时掉落一个**经验球**（`ExperienceOrb`）。基类是 `Pickup`，负责重力/落地、
+  超时消失、靠近吸附与拾取判定；"捡到之后发生什么" 由子类实现 `apply()`。
+- **拾取半径由玩家决定**：`Player::pickup_radius()`，掉落物自己不定义范围；
+  吸附范围取该半径的 3 倍（`src/pickup.cpp` 的 `pickup_magnet_scale`）。
+- 经验球存活 15s，最后 3s 闪烁；被拾取后给场景里的 `Progression` 加经验。
+- `Progression` 是场景级组件：1→2 级需 20 点，之后每级 +15；升级时屏幕上方闪一行
+  `LEVEL UP  Lv n`。
+- HUD 第三行是经验条，右侧显示 `Lv n`。
+- **死亡惩罚**：玩家被敌人打死后（血量归零重生）扣掉一级经验等级，最低 1 级，
+  当前等级内的经验清零；掉级时屏幕上方闪一行红色的 `LEVEL DOWN  Lv n`。
+
 ## 构建
 
 使用 `ezmk`（见 `ezmk.toml`）：
@@ -39,5 +52,7 @@ ezmk project cc               # 生成 compile_commands.json 供 clangd 使用
 - `include/ege/`、`lib/`：EGE 图形库的头文件与静态库
 - `include/level.h`：关卡数据（几何 + 刷怪点），`build_level()` 只负责静态几何
 - `include/spawner.h`：自动刷怪；`include/spawn_effect.h`：生成爆闪
+- `include/pickup.h`：掉落物基类；`include/experience_orb.h`：经验球
+- `include/progression.h`：经验/等级系统
 - `include/scene.h`：`Spirit` 容器，负责生命周期与更新/绘制分发
 - 坐标系约定：所有 `Rect` 派生类（`Actor` / `Obstacle` / `Platform`）的 `_x/_y` 都是碰撞盒中心点

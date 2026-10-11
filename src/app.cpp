@@ -9,6 +9,7 @@
 #include "define.h"
 #include "ege/graphics.h"
 #include "player.h"
+#include "progression.h"
 
 constexpr int crosshair_arm = 8;
 constexpr int crosshair_gap = 3;
@@ -22,6 +23,12 @@ constexpr int hud_health_x = 12;
 constexpr int hud_health_y = 34;
 constexpr int hud_health_width = 160;
 constexpr int hud_health_height = 10;
+constexpr int hud_xp_x = 12;
+constexpr int hud_xp_y = 52;
+constexpr int hud_xp_width = 160;
+constexpr int hud_xp_height = 6;
+constexpr int hud_xp_label_gap = 8;
+constexpr int hud_xp_font_height = 14;
 
 // 单帧最多消化的真实时间，避免窗口被拖动/系统卡顿后物理一次跨出好几秒
 constexpr float max_frame_time = 0.25f;
@@ -101,6 +108,24 @@ void App::_draw_hud() {
 		setfillcolor(ratio > 0.5f ? rgb(80, 200, 90) : rgb(230, 60, 60), _target);
 		bar(hud_health_x, hud_health_y, hud_health_x + static_cast<int>(hud_health_width * ratio),
 			hud_health_y + hud_health_height, _target);
+	});
+
+	// 经验条 + 等级：Lv 数字画在条的右侧
+	_root_scene.each<Progression>([&](Progression &progression) {
+		setfillcolor(rgb(50, 60, 78), _target);
+		bar(hud_xp_x, hud_xp_y, hud_xp_x + hud_xp_width, hud_xp_y + hud_xp_height, _target);
+
+		int filled = static_cast<int>(static_cast<float>(hud_xp_width) * progression.progress());
+		if (filled > 0) {
+			setfillcolor(rgb(90, 220, 235), _target);
+			bar(hud_xp_x, hud_xp_y, hud_xp_x + filled, hud_xp_y + hud_xp_height, _target);
+		}
+
+		setfont(hud_xp_font_height, 0, "Consolas", _target);
+		setbkmode(TRANSPARENT, _target);
+		setlinecolor(rgb(200, 240, 255), _target);
+		std::string label = "Lv " + std::to_string(progression.level());
+		outtextxy(hud_xp_x + hud_xp_width + hud_xp_label_gap, hud_xp_y - 4, label.c_str(), _target);
 	});
 }
 
