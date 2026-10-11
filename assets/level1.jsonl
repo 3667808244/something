@@ -1,0 +1,19 @@
+// 关卡 1：坐标约定与 Rect 一致，全部是碰撞盒中心点
+// 每行一条记录；type: player / obstacle / platform / spawn
+// 注释使用 // 与 /* */
+{"type":"player","x":320,"y":180}
+
+{"type":"obstacle","x":120,"y":410,"width":160,"height":20}
+{"type":"obstacle","x":300,"y":350,"width":120,"height":20}
+{"type":"obstacle","x":530,"y":290,"width":140,"height":20}
+{"type":"obstacle","x":320,"y":474,"width":640,"height":12}
+
+{"type":"platform","x":140,"y":306,"width":120,"height":12}
+{"type":"platform","x":380,"y":246,"width":160,"height":12}
+{"type":"platform","x":535,"y":386,"width":130,"height":12}
+
+{"type":"spawn","x":60,"y":110}     // 顶部两角
+{"type":"spawn","x":580,"y":110}
+{"type":"spawn","x":320,"y":70}
+{"type":"spawn","x":100,"y":250}    /* 平台上空 */
+{"type":"spawn","x":540,"y":175}

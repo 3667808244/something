@@ -71,6 +71,26 @@ ezmk project cc               # 生成 compile_commands.json 供 clangd 使用
 > `/SUBSYSTEM:WINDOWS`），产物是 Windows 子系统、双击不弹命令行窗口；
 > `debug` 仍是控制台子系统，`F3` 的调试输出只在 debug 下看得到。
 
+## 关卡文件
+
+地图不再写死在 `src/main.cpp` 里，而是从 `assets/level1.jsonl` 读取。每行一条 **JSONL** 记录，
+坐标约定与 `Rect` 一致（都是碰撞盒中心点）：
+
+```jsonl
+{"type":"player","x":320,"y":180}
+{"type":"obstacle","x":120,"y":410,"width":160,"height":20}
+{"type":"platform","x":140,"y":306,"width":120,"height":12}
+{"type":"spawn","x":60,"y":110}
+```
+
+- `type` 取值：`player`（出生点，必须有且只有一个）/ `obstacle`（实心，挡人挡子弹）/
+  `platform`（单向平台）/ `spawn`（刷怪点）。
+- 注释：`//` 与同一行内的 `/* */`（nlohmann/json 的非标扩展；整行注释也可以）。
+- 查找顺序：命令行参数 → exe 所在目录 → 当前目录 → 上述两者的 `assets/` 子目录。
+- 找不到文件时回退到内置地图并打印警告；文件存在但解析/字段校验失败时打印
+  `文件:行号: 原因` 并以退出码 1 结束。
+- 窗口尺寸仍由 `src/main.cpp` 的 `window_width` / `window_height` 决定。
+
 ## 结构
 
 - `include/`、`src/`：游戏本体
