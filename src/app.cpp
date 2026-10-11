@@ -249,6 +249,11 @@ void App::_draw() {
 			info.lifesteal = player.lifesteal_per_kill();
 			info.experience_gain = player.experience_gain();
 			info.pickup_radius = player.pickup_radius();
+			info.jump_velocity = player.jump_velocity();
+			info.invulnerable_duration = player.invulnerable_duration();
+			info.armor_regen_delay = player.armor_regen_delay();
+			info.armor_regen_rate = player.armor_regen_rate();
+			info.ammo_on_kill = player.ammo_on_kill();
 		});
 		_root_scene.each<UpgradeSystem>([&](UpgradeSystem &system) { info.modifiers = system.modifiers(); });
 		_pause_menu.draw(_target, info);

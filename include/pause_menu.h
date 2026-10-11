@@ -23,6 +23,11 @@ struct PauseInfo {
 	int lifesteal = 0;
 	float experience_gain = 1.0f;
 	float pickup_radius = 0.0f;
+	float jump_velocity = 0.0f;
+	float invulnerable_duration = 0.0f;
+	float armor_regen_delay = 0.0f;
+	float armor_regen_rate = 0.0f;
+	int ammo_on_kill = 0;
 };
 
 // 暂停界面：左侧按钮（继续 / 重新开始 / 返回开始界面 / 退出游戏），

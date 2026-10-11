@@ -175,6 +175,13 @@ void PauseMenu::_draw_stats(PIMAGE image, const PauseInfo &info) {
 					 info.experience_gain > 1.0f ? format_stat(L"+%.0f%%", (info.experience_gain - 1.0f) * 100.0f)
 														 : std::wstring(L"—") });
 	rows.push_back({ L"拾取半径", format_stat(L"%.0f", info.pickup_radius) });
+	rows.push_back({ L"跳跃力", format_stat(L"%.0f", info.jump_velocity) });
+	rows.push_back({ L"无敌时间", format_stat(L"%.2f s", info.invulnerable_duration) });
+	rows.push_back({ L"护甲回复",
+									 format_stat(L"%.1fs", info.armor_regen_delay) + L" / " +
+									 format_stat(L"%.0f", info.armor_regen_rate) + L"/s" });
+	rows.push_back({ L"击杀补弹",
+									 info.ammo_on_kill > 0 ? L"+" + std::to_wstring(info.ammo_on_kill) + L" 发" : std::wstring(L"—") });
 
 	settextcolor(rgb(200, 212, 228), image);
 	int row_y = stats_first_y;

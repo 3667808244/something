@@ -17,6 +17,10 @@ enum class UpgradeId {
 	BulletDamage,
 	Armor,
 	ReloadSpeed,
+	JumpPower,
+	Invulnerability,
+	ArmorRegen,
+	AmmoOnKill,
 	// 高级：每 5 级三选一，最多 3 层
 	Explosive,
 	Lifesteal,
@@ -25,6 +29,10 @@ enum class UpgradeId {
 	Thorns,
 	ExperienceGain,
 	Shotgun,
+	DoubleJump,
+	Ricochet,
+	EliteHunter,
+	Drone,
 };
 
 struct UpgradeDef {
@@ -45,6 +53,10 @@ struct UpgradeModifiers {
 	int bullet_damage = 0;
 	int armor = 0;
 	int reload_speed = 0;
+	int jump_power = 0;
+	int invulnerability = 0;
+	int armor_regen = 0;
+	int ammo_on_kill = 0;
 	int explosive = 0;
 	int lifesteal = 0;
 	int magnet = 0;
@@ -52,6 +64,10 @@ struct UpgradeModifiers {
 	int thorns = 0;
 	int experience_gain = 0;
 	int shotgun = 0;
+	int double_jump = 0;
+	int ricochet = 0;
+	int elite_hunter = 0;
+	int drone = 0;
 };
 
 constexpr std::size_t upgrade_tier_count = 2;
@@ -65,4 +81,4 @@ int upgrade_stack_count(const UpgradeModifiers &mods, UpgradeId id);
 
 // 绘制一张升级卡（普通=蓝灰，高级=金色），index 用于显示 [1]/[2]/[3]
 void upgrade_draw_card(PIMAGE image, const UpgradeDef &def, int index, int stacks, int left, int top, int width,
-					   int height, bool highlighted);
+											  int height, bool highlighted);

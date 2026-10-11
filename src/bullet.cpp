@@ -1,5 +1,6 @@
 #include "bullet.h"
 
+#include <algorithm>
 #include <cmath>
 #include <vector>
 
@@ -16,9 +17,12 @@ constexpr float bullet_width = 3.0f;
 constexpr float bullet_gravity_scale = 0.5f;
 constexpr float explosive_radius = 30.0f;
 constexpr float explosive_chance_per_stack = 0.15f;
+// 反弹后把子弹推离表面一点点，并给一个很短的冷却，避免在墙角反复弹
+constexpr float bounce_push = 1.5f;
+constexpr float bounce_cooldown_time = 0.04f;
 
-Bullet::Bullet(float x, float y, float dir_x, float dir_y, float speed, int damage, int explosive, int pierce,
-			   int window_width, int window_height) {
+Bullet::Bullet(float x, float y, float dir_x, float dir_y, float speed, const BulletStats &stats, int window_width,
+			   int window_height) {
 	_window_width = window_width;
 	_window_height = window_height;
 	_x = x;
@@ -26,9 +30,12 @@ Bullet::Bullet(float x, float y, float dir_x, float dir_y, float speed, int dama
 	_vel_x = dir_x * speed;
 	_vel_y = dir_y * speed;
 	_hit = false;
-	_damage = damage;
-	_explosive = explosive;
-	_pierce = pierce;
+	_damage = stats.damage;
+	_explosive = stats.explosive;
+	_pierce = stats.pierce;
+	_ricochet = stats.ricochet;
+	_elite_bonus = stats.elite_bonus;
+	_bounce_cooldown = 0.0f;
 	if (_explosive > 0) {
 		// 普通子弹不需要随机数：只在真的可能爆炸时才播种，省掉每发的 mt19937 构造开销
 		_rng.emplace(make_random_seed(static_cast<std::uint64_t>(static_cast<unsigned>(x))));
@@ -42,6 +49,13 @@ bool Bullet::_already_hit(std::uint64_t serial) const {
 		}
 	}
 	return false;
+}
+
+int Bullet::_damage_against(const Enemy &enemy) const {
+	if (_elite_bonus > 0.0f && enemy.is_elite()) {
+		return std::max(1, static_cast<int>(std::lround(static_cast<float>(_damage) * (1.0f + _elite_bonus))));
+	}
+	return _damage;
 }
 
 void Bullet::_explode(Scene &scene, float x, float y, const Enemy *direct) {
@@ -68,10 +82,40 @@ void Bullet::_explode(Scene &scene, float x, float y, const Enemy *direct) {
 	});
 
 	for (Enemy *victim : victims) {
-		victim->take_damage(_damage, scene);
+		victim->take_damage(_damage_against(*victim), scene);
 	}
 
 	scene.add_spirit<ExplosionEffect>(x, y, explosive_radius);
+}
+
+bool Bullet::_try_bounce(const Obstacle &obstacle, float hit_x, float hit_y) {
+	if (_ricochet <= 0 || _bounce_cooldown > 0.0f) {
+		return false;
+	}
+	--_ricochet;
+	_bounce_cooldown = bounce_cooldown_time;
+
+	// 判断撞的是哪一面：命中点到四条边里最近的那条就是被撞的面
+	const float to_left = std::abs(hit_x - obstacle.left());
+	const float to_right = std::abs(hit_x - obstacle.right());
+	const float to_top = std::abs(hit_y - obstacle.top());
+	const float to_bottom = std::abs(hit_y - obstacle.bottom());
+	const float nearest = std::min(std::min(to_left, to_right), std::min(to_top, to_bottom));
+
+	if (nearest == to_left) {
+		_vel_x = -std::abs(_vel_x);
+		_x = obstacle.left() - bounce_push;
+	} else if (nearest == to_right) {
+		_vel_x = std::abs(_vel_x);
+		_x = obstacle.right() + bounce_push;
+	} else if (nearest == to_top) {
+		_vel_y = -std::abs(_vel_y);
+		_y = obstacle.top() - bounce_push;
+	} else {
+		_vel_y = std::abs(_vel_y);
+		_y = obstacle.bottom() + bounce_push;
+	}
+	return true;
 }
 
 void Bullet::draw(PIMAGE image) {
@@ -100,6 +144,10 @@ void Bullet::draw(PIMAGE image) {
 }
 
 void Bullet::update(float delta, Scene &scene) {
+	if (_bounce_cooldown > 0.0f) {
+		_bounce_cooldown -= delta;
+	}
+
 	float previous_x = _x;
 	float previous_y = _y;
 
@@ -108,10 +156,12 @@ void Bullet::update(float delta, Scene &scene) {
 	_y += _vel_y * delta;
 
 	float obstacle_t = -1.0f;
+	const Obstacle *obstacle_hit = nullptr;
 	scene.each<Obstacle>([&](Obstacle &obstacle) {
 		float t = obstacle.segment_hit_t(previous_x, previous_y, _x, _y);
 		if (t >= 0.0f && (obstacle_t < 0.0f || t < obstacle_t)) {
 			obstacle_t = t;
+			obstacle_hit = &obstacle;
 		}
 	});
 
@@ -148,11 +198,14 @@ void Bullet::update(float delta, Scene &scene) {
 	scene.add_spirit<HitEffect>(hit_x, hit_y);
 
 	if (hit_obstacle) {
-		_hit = true;
+		// 有跳弹就弹开继续飞，否则原地消失
+		if (obstacle_hit == nullptr || !_try_bounce(*obstacle_hit, hit_x, hit_y)) {
+			_hit = true;
+		}
 		return;
 	}
 
-	enemy_hit->take_damage(_damage, scene);
+	enemy_hit->take_damage(_damage_against(*enemy_hit), scene);
 	_hit_enemies.push_back(enemy_hit->serial());
 	_explode(scene, hit_x, hit_y, enemy_hit);
 
@@ -170,5 +223,5 @@ bool Bullet::is_invalid() const {
 
 	float margin = bullet_length / 2.0f;
 	return _x < -margin || _x > static_cast<float>(_window_width) + margin || _y < -margin ||
-		   _y > static_cast<float>(_window_height) + margin;
+			   _y > static_cast<float>(_window_height) + margin;
 }
