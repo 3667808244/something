@@ -160,6 +160,30 @@
       "-g",
       "-O0",
       "-IE:\\cpp\\projects\\ege-projects\\something\\include",
+      "src/level.cpp",
+      "-o",
+      "build/src/level.o"
+    ],
+    "directory": "E:\\cpp\\projects\\ege-projects\\something",
+    "file": "src/level.cpp"
+  },
+  {
+    "arguments": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "-DEZMK=1",
+      "-DEZMK_VERSION=\"1.4.9\"",
+      "-DEZMK_PROJECT_NAME=\"something\"",
+      "-DEZMK_PROJECT_VERSION=\"0.1.0\"",
+      "-DEZMK_PROJECT_TYPE=\"executable\"",
+      "-DEZMK_LANG=\"CPP17\"",
+      "-DEZMK_STDLIB=\"libstdcxx\"",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O0",
+      "-IE:\\cpp\\projects\\ege-projects\\something\\include",
       "src/main.cpp",
       "-o",
       "build/src/main.o"
@@ -286,5 +310,53 @@
     ],
     "directory": "E:\\cpp\\projects\\ege-projects\\something",
     "file": "src/scene.cpp"
+  },
+  {
+    "arguments": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "-DEZMK=1",
+      "-DEZMK_VERSION=\"1.4.9\"",
+      "-DEZMK_PROJECT_NAME=\"something\"",
+      "-DEZMK_PROJECT_VERSION=\"0.1.0\"",
+      "-DEZMK_PROJECT_TYPE=\"executable\"",
+      "-DEZMK_LANG=\"CPP17\"",
+      "-DEZMK_STDLIB=\"libstdcxx\"",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O0",
+      "-IE:\\cpp\\projects\\ege-projects\\something\\include",
+      "src/spawn_effect.cpp",
+      "-o",
+      "build/src/spawn_effect.o"
+    ],
+    "directory": "E:\\cpp\\projects\\ege-projects\\something",
+    "file": "src/spawn_effect.cpp"
+  },
+  {
+    "arguments": [
+      "g++",
+      "-std=c++17",
+      "-c",
+      "-DEZMK=1",
+      "-DEZMK_VERSION=\"1.4.9\"",
+      "-DEZMK_PROJECT_NAME=\"something\"",
+      "-DEZMK_PROJECT_VERSION=\"0.1.0\"",
+      "-DEZMK_PROJECT_TYPE=\"executable\"",
+      "-DEZMK_LANG=\"CPP17\"",
+      "-DEZMK_STDLIB=\"libstdcxx\"",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-O0",
+      "-IE:\\cpp\\projects\\ege-projects\\something\\include",
+      "src/spawner.cpp",
+      "-o",
+      "build/src/spawner.o"
+    ],
+    "directory": "E:\\cpp\\projects\\ege-projects\\something",
+    "file": "src/spawner.cpp"
   }
 ]
